@@ -212,6 +212,47 @@ def create_all_artifacts(worlds):
     first_names = ['Platinum', 'Ancient', 'Vegan', 'Blessed', 'Arcturian', 'Silver', 'Titanium', 'Gold', 'Radiant',
                    'Plastic']
     second_names = ['Lodestar', 'Pyramid', 'Stardust', 'Shekel', 'Crown', 'Sword', 'Moonstone', 'Sepulchre', 'Sphinx']
+
+    artifact = Artifact(None, 'Treasure of Polaris', None)
+    artifact.location = random.choice(worlds)
+    artifact.locate.artifacts.append(artifact)
+    artifacts.append(artifact)
+
+    artifact = Artifact(None, 'Slippers of Venus', None)
+    artifact.location = random.choice(worlds)
+    artifact.locate.artifacts.append(artifact)
+    artifacts.append(artifact)
+
+    artifact = Artifact(None, 'Radioactive Isotope', None)
+    artifact.location = random.choice(worlds)
+    artifact.locate.artifacts.append(artifact)
+    artifacts.append(artifact)
+
+    artifact = Artifact(None, 'Mebula Scroll Volume 1', None)
+    artifact.location = random.choice(worlds)
+    artifact.locate.artifacts.append(artifact)
+    artifacts.append(artifact)
+
+    artifact = Artifact(None, 'Mebula Scroll Volume 2', None)
+    artifact.location = random.choice(worlds)
+    artifact.locate.artifacts.append(artifact)
+    artifacts.append(artifact)
+
+    artifact = Artifact(None, 'Mebula Scroll Volume 3', None)
+    artifact.location = random.choice(worlds)
+    artifact.locate.artifacts.append(artifact)
+    artifacts.append(artifact)
+
+    artifact = Artifact(None, 'Mebula Scroll Volume 4', None)
+    artifact.location = random.choice(worlds)
+    artifact.locate.artifacts.append(artifact)
+    artifacts.append(artifact)
+
+    artifact = Artifact(None, 'Mebula Scroll Volume 5', None)
+    artifact.location = random.choice(worlds)
+    artifact.locate.artifacts.append(artifact)
+    artifacts.append(artifact)
+
     for first_name in first_names:
         for second_name in second_names:
             artifact = Artifact(None, first_name, second_name)
@@ -471,27 +512,38 @@ def new_game():
 
 @app.route('/empire_builder')
 def empire_builder():
-    return 'Empire Builder'
+    greatest_treasure = ('Platinum', 'Crown')
+    return 'Empire Builder' + str(greatest_treasure)
 
 
 @app.route('/merchant')
 def merchant():
-    return 'Merchant'
+    greatest_treasure = ('Gold', 'Shekel')
+    return 'Merchant' + str(greatest_treasure)
 
 
 @app.route('/pirate')
 def pirate():
-    return 'Pirate'
+    greatest_treasure = ('Silver', 'Loadstar')
+    return 'Pirate' + str(greatest_treasure)
 
 
 @app.route('/artifact_collector')
 def artifact_collector():
-    return 'Artifact Collector'
+    greatest_treasure = ('Ancient', 'Pyramid')
+    return 'Artifact Collector' + str(greatest_treasure)
 
 
 @app.route('/berserker')
 def berserker():
-    return 'Berserker'
+    greatest_treasure = ('Titanium', 'Sword')
+    return 'Berserker' + str(greatest_treasure)
+
+
+@app.route('/apostle')
+def apostle():
+    greatest_treasure = ('Blessed', 'Sepulcher')
+    return 'Apostle' + str(greatest_treasure)
 
 
 @app.route('/')
