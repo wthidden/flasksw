@@ -155,6 +155,12 @@ def generate_player_type():
 
 
 def generate_home_world(player, worlds):
+    """
+    Add a home world for the player in the worlds list
+    :param player:
+    :param worlds:
+    :return:
+    """
 
     world = World(player)
     world.owner = player
@@ -181,11 +187,10 @@ Lodestar, and a Radiant Sepulchre is a Radiant Sepulchre.
 """
 
 
-def default_artifact_value(artifact):
-    return 0
-
-
 class Artifact:
+    """
+    Artifacts are special items that can be found in the galaxy. Players can collect them to increase their score.
+    """
     def __init__(self, owner, first_name, second_name):
         self.owner = owner
         self.first_name = first_name
@@ -198,6 +203,11 @@ class Artifact:
 
 
 def create_all_artifacts(worlds):
+    """
+    Create all artifacts in the galaxy and place them in random locations.
+    :param worlds:
+    :return:
+    """
     artifacts = []
     first_names = ['Platinum', 'Ancient', 'Vegan', 'Blessed', 'Arcturian', 'Silver', 'Titanium', 'Gold', 'Radiant',
                    'Plastic']
@@ -212,6 +222,9 @@ def create_all_artifacts(worlds):
 
 
 class Player:
+    """
+    A player can be allied with another player, or neutral with another player, or hostile with another player.
+    """
     def __init__(self, name, player_character):
         self.id = uuid.uuid1()
         self.name = name
@@ -231,6 +244,9 @@ class Player:
 
 
 class CharacterType:
+    """
+    Character types are the different types of players that can be in the game. Each character type has a different
+    """
     def __init__(self, name, description, greatest_treasure):
         self.name = name
         self.description = description
@@ -243,6 +259,16 @@ class CharacterType:
 def create_all_character_types(pirate_description=None, berserker_description=None, empire_builder_description=None,
                                apostle_description=None, artifact_collector_description=None,
                                merchant_description=None):
+    """
+    Create all character types
+    :param pirate_description:
+    :param berserker_description:
+    :param empire_builder_description:
+    :param apostle_description:
+    :param artifact_collector_description:
+    :param merchant_description:
+    :return: a list of all character types
+    """
     character_types = ['Pirate', 'Berserker', 'Empire Builder', 'Apostle', 'Artifact Collector', 'Merchant']
     descriptions = [pirate_description, berserker_description, empire_builder_description, apostle_description,
                     artifact_collector_description, merchant_description]
@@ -256,6 +282,9 @@ def create_all_character_types(pirate_description=None, berserker_description=No
 
 
 class World:
+    """
+    A world is a location in the galaxy. It has a name, a population, a population limit, an industry, mines, and metal.
+    """
     def __init__(self, id, owner, location, connections, i_ships, p_ships, population, max_population, industry, metal,
                  mines, artifacts):
         self.id = id
@@ -272,6 +301,11 @@ class World:
         self.artifacts = artifacts
 
     def effective_population(self, fleets: []):
+        """
+        Returns the effective population of a world, taking into account the number of ships in orbit
+        :param fleets:
+        :return:
+        """
         fleet_list = [f for f in fleets if f.location == self and not allied(f.owner, self.owner)]
         total_ships = reduce(lambda x, y: x + y, [f.ships for f in fleet_list])
         effective_population = self.population - total_ships + self.p_ships * 2
@@ -280,6 +314,11 @@ class World:
 
 # TODO: implement this method
 def create_connections(new_worlds):
+    """
+    This method will create connections between worlds.
+    :param new_worlds:
+    :return:
+    """
     print(f"Creating connections for {len(new_worlds)} worlds")
     for w1 in new_worlds:
         print(f"World-1 {w1.id} has {len(w1.connections)} connections")
@@ -297,17 +336,31 @@ world_id = 0
 
 
 def reset_world_id():
+    """
+    Reset the world id to 0
+    :return:
+    """
     global world_id
     world_id = 0
 
 
 def next_world_id():
+    """
+    Returns the next world id and increments the global world_id variable
+    :return:
+    """
     global world_id
     world_id += 1
     return world_id
 
 
 def create_worlds(num_worlds, new_worlds):
+    """
+
+    :param num_worlds:
+    :param new_worlds:
+    :return: the modified new_worlds list
+    """
     for i in range(0, num_worlds):
         max_population = random.randint(1, 10)
         population = random.randint(1, 10)
@@ -386,6 +439,12 @@ class Fleet:
 # which already has some I-SHIPS or P-SHIPS, you will not capture that world until you destroy the home fleets.
 
 def create_fleets(num_fleets, new_worlds):
+    """
+    create fleets and locations for them
+    :param num_fleets:
+    :param new_worlds:
+    :return:
+    """
     new_fleets = []
     for i in range(0, num_fleets):
         new_fleets.append(
@@ -396,6 +455,10 @@ def create_fleets(num_fleets, new_worlds):
 
 @app.route('/new_game')
 def new_game():
+    """
+    This method will create a new game
+    :return: a html page with the game
+    """
     players = []
     new_worlds = []
     new_worlds = create_worlds(100, new_worlds)
