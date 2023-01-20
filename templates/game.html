@@ -1,0 +1,70 @@
+<!-- <comment>render player and worlds with jina2 and flask game elements</comment> -->
+<!
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Game</title>
+</head>
+<body>
+<! -- render game elements -->
+{% for player in players %}
+    <div class="player">
+        <h1>{{ player.name }}</h1>
+        <p>{{ player.description }}</p>
+        <p>{{ player.location }}</p>
+    </div>
+{% endfor %}
+<-- render fleet elements -->
+<--         self.owner = owner
+        self.location = location
+        self.ships = ships
+        self.cargo = cargo
+        self.destination = destination
+        self.artifacts = artifacts
+        self.planet_buster_bomb = planet_buster_bomb
+-->
+{% for fleet in fleets %}
+    <div class="fleet">
+        <h1>{{ fleet.owner }}</h1>
+        <p>{{ fleet.location.id }}</p>
+        <p>{{ fleet.ships }}</p>
+        <p>{{ fleet.cargo }}</p>
+        <p>{{ fleet.destination }}</p>
+        <p>{{ fleet.artifacts }}</p>
+        <p>{{ fleet.planet_buster_bomb }}</p>
+    </div>
+{% endfor %}
+
+{% for world in worlds %}
+    <div class="world">
+    <ul>
+        <li>id = {{ world.id }}</li>
+        <li>industry = {{ world.industry }}</li>
+        <li>i-ships = {{ world.i_ships }}</li>
+        <li>p-ships = {{ world.p_ships }}</li>
+        <li>owner = {{ world.owner }}</li>
+        <li>mines = {{ world.mines }}</li>
+        <li>population = {{ world.population }}</li>
+        <li>max-population{{ world.max_population }}</li>
+    <li>connections = [
+        {% for c in world.connections %}
+        {{ c.id }}
+            {% if not loop.last %},
+            {% endif %}
+        {% endfor %}
+    ]</li>
+    <li> artifacts = [
+{% for a in world.artifacts %}
+        ({{ a.first_name }} {{ a.second_name }})
+        {% if not loop.last %},
+        {% endif %}
+        {% endfor %}
+    ]</li>
+    </ul>
+    </div>
+{% endfor %}
+</body>
+</html>

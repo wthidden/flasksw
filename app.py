@@ -2,7 +2,7 @@ import random
 import uuid
 from functools import reduce
 
-from flask import Flask
+from flask import Flask, request, jsonify, render_template
 
 app = Flask(__name__)
 
@@ -154,31 +154,69 @@ def generate_player_type():
     return random.choice(['Convert', 'Berserker', 'Empire Builder', 'Apostle', 'Artifact Collector', 'Merchant'])
 
 
-worlds = []
+def generate_home_world(player, worlds):
 
-
-def generate_home_world(player):
     world = World(player)
     world.owner = player
     player.home_world = world
-    world.population = 1
-    world.population_limit = 1
-    world.industry = 1
-    world.mines = 1
-    world.metal = 1
+    world.population = 100
+    world.population_limit = 100
+    world.industry = 20
+    world.mines = 20
+    world.metal = 50
     world.name = 'Home World'
     worlds.append(world)
     return world
 
 
+"""
+Artifacts are special items that can be found in the galaxy. They are not owned by any player, but can be picked up
+by any player. Artifacts comprise of a primary and a secondary name. The primary name is one of the following:
+Platinum, Ancient, Vegan, Blessed, Arcturian, Silver, Titanium, Gold, Radiant, Plastic.
+The secondary name is one of the following:
+Lodestar, Pyramid, Stardust, Shekel, Crown, Sword, Moonstone, Sepulchre, Sphinx.
+The artifact name is the primary name followed by the secondary name. For example, a Platinum Lodestar is a Platinum
+Lodestar, and a Radiant Sepulchre is a Radiant Sepulchre.
+
+"""
+
+
+def default_artifact_value(artifact):
+    return 0
+
+
+class Artifact:
+    def __init__(self, owner, first_name, second_name):
+        self.owner = owner
+        self.first_name = first_name
+        self.second_name = second_name
+        self.location = None
+        self.value = default_artifact_value(self)
+
+    def __str__(self):
+        return f"Artifact {self.name} owned by {self.owner.name} at {self.location.name}"
+
+
+def create_all_artifacts(worlds):
+    artifacts = []
+    first_names = ['Platinum', 'Ancient', 'Vegan', 'Blessed', 'Arcturian', 'Silver', 'Titanium', 'Gold', 'Radiant',
+                   'Plastic']
+    second_names = ['Lodestar', 'Pyramid', 'Stardust', 'Shekel', 'Crown', 'Sword', 'Moonstone', 'Sepulchre', 'Sphinx']
+    for first_name in first_names:
+        for second_name in second_names:
+            artifact = Artifact(None, first_name, second_name)
+            artifact.location = random.choice(worlds)
+            artifact.location.artifacts.append(artifact)
+            artifacts.append(artifact)  # add to list of all artifacts
+    return artifacts
+
+
 class Player:
-    def __init__(self, name, type):
+    def __init__(self, name, player_character):
         self.id = uuid.uuid1()
-        self.name = generate_name()
-        self.type = generate_player_type()
+        self.name = name
+        self.type = player_character
         self.home_world = generate_home_world(self)
-        self.fleets = []
-        self.artifacts = []
         self.points = 0
         self.allies = {}
 
@@ -190,6 +228,31 @@ class Player:
 
     def neutral(self, player):
         self.allies[player] = 'neutral'
+
+
+class CharacterType:
+    def __init__(self, name, description, greatest_treasure):
+        self.name = name
+        self.description = description
+        self.greatest_treasurer = greatest_treasure
+
+    def __str__(self):
+        return f"{self.name}: {self.description}"
+
+
+def create_all_character_types(pirate_description=None, berserker_description=None, empire_builder_description=None,
+                               apostle_description=None, artifact_collector_description=None,
+                               merchant_description=None):
+    character_types = ['Pirate', 'Berserker', 'Empire Builder', 'Apostle', 'Artifact Collector', 'Merchant']
+    descriptions = [pirate_description, berserker_description, empire_builder_description, apostle_description,
+                    artifact_collector_description, merchant_description]
+    greatest_treasurers = [('Silver', 'Lodestar'), ('Titanium', 'Sword'), ('Platinum', 'Crown'),
+                           ('Blessed', 'Sepulchre'), ('Ancient', 'Pyramid'), ('Gold', 'Shekel')]
+    character_type_list = []
+
+    for i in range(len(character_types)):
+        character_type_list.append(CharacterType(character_types[i], descriptions[i], greatest_treasurers[i]))
+    return character_type_list
 
 
 class World:
@@ -216,26 +279,55 @@ class World:
 
 
 # TODO: implement this method
-def create_worlds(num_worlds):
-    worlds = []
-    max_population = random.randint(1, 10)
-    population = random.randint(1, 10)
-    population = population if population < max_population else max_population
-    i_ships = random.randint(0, 10)
-    i_ships = i_ships if i_ships < population else population
-    p_ships = random.randint(0, 10)
-    p_ships = p_ships if p_ships < population else population
-    industry = random.randint(0, 10)
-    industry = industry if industry < population else population
-    metal = random.randint(0, 10)
-    mines = random.randint(0, 10)
-    mines = mines if mines < population else population
-    artifacts = ['artifact1', 'artifact2']
+def create_connections(new_worlds):
+    print(f"Creating connections for {len(new_worlds)} worlds")
+    for w1 in new_worlds:
+        print(f"World-1 {w1.id} has {len(w1.connections)} connections")
+        for w2 in new_worlds:
+            print(f"World-2 {w2.id} has {len(w2.connections)} connections")
+            if w1 != w2:
+                if len(w1.connections) < 6 and len(w2.connections) < 6:
+                    w1.connections.append(w2)
+                    w2.connections.append(w1)
+    print(f"Created {len(new_worlds)} worlds")
 
+
+global world_id
+world_id = 0
+
+
+def reset_world_id():
+    global world_id
+    world_id = 0
+
+
+def next_world_id():
+    global world_id
+    world_id += 1
+    return world_id
+
+
+def create_worlds(num_worlds, new_worlds):
     for i in range(0, num_worlds):
-        worlds.append(World(i, None, None, [], i_ships, p_ships, population, max_population,
-                            industry, metal, mines, artifacts))
-    return worlds
+        max_population = random.randint(1, 10)
+        population = random.randint(1, 10)
+        population = population if population < max_population else max_population
+        i_ships = random.randint(0, 10)
+        i_ships = i_ships if i_ships < population else population
+        p_ships = random.randint(0, 10)
+        p_ships = p_ships if p_ships < population else population
+        industry = random.randint(0, 10)
+        industry = industry if industry < population else population
+        metal = random.randint(0, 10)
+        mines = random.randint(0, 10)
+        mines = mines if mines < population else population
+        artifacts = []
+        new_worlds.append(
+            World(next_world_id(), generate_name(), generate_player_type(), [], i_ships, p_ships, population,
+                  max_population,
+                  industry, metal, mines, artifacts))
+    create_connections(new_worlds)
+    return new_worlds
 
 
 class Fleet:
@@ -292,6 +384,26 @@ class Fleet:
 # necessary to destroy all the home fleets. You do not have to have any ships at a world to retain control, but if
 # another player shows up and you do not have any ships there, you lose the world. If you show up at an unowned world
 # which already has some I-SHIPS or P-SHIPS, you will not capture that world until you destroy the home fleets.
+
+def create_fleets(num_fleets, new_worlds):
+    new_fleets = []
+    for i in range(0, num_fleets):
+        new_fleets.append(
+            Fleet(generate_name(), random.choice(new_worlds), random.randint(0, 10), random.randint(0, 10),
+                  random.choice(new_worlds), [], False))
+    return new_fleets
+
+
+@app.route('/new_game')
+def new_game():
+    players = []
+    new_worlds = []
+    new_worlds = create_worlds(100, new_worlds)
+    artifacts = create_all_artifacts(new_worlds)
+    fleets = create_fleets(100, new_worlds)
+    character_types = create_all_character_types()
+
+    return render_template('game.html', players=players, fleets=fleets, worlds=new_worlds)
 
 
 @app.route('/empire_builder')
