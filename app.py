@@ -1414,11 +1414,9 @@ transfer_n_pships_from_world_to_iships = re.compile("P\d+T\d+I")
 transfer_n_iships_from_world_to_pships = re.compile("I\d+T\d+P")
 
 transfer_orders = [transfer_n_ships_from_fleet_to_fleet, transfer_n_ships_from_fleet_to_iships,
-                     transfer_n_ships_from_fleet_to_pships, transfer_n_iships_from_world_to_fleet,
-                        transfer_n_pships_from_world_to_fleet, transfer_n_pships_from_world_to_iships,
-                        transfer_n_iships_from_world_to_pships]
-
-
+                   transfer_n_ships_from_fleet_to_pships, transfer_n_iships_from_world_to_fleet,
+                   transfer_n_pships_from_world_to_fleet, transfer_n_pships_from_world_to_iships,
+                   transfer_n_iships_from_world_to_pships]
 
 """
 WnnnBqqqI = build qqq ISHIPS at world nnn. (This order is actually not necessary as all industry not otherwise ordered will automatically build ISHPS.)
@@ -1429,10 +1427,25 @@ WnnnIqqqL = increase the population limit of world nnn by qqq (uses 5 industry a
 WnnnBqqqR = build robots with qqq industry (makes twice that many robots). This order may only be given if the world is already populated with robots.
 """
 
+build_n_iships_at_world = re.compile("W\d+B\d+I")
+build_n_pships_at_world = re.compile("W\d+B\d+P")
+build_n_ships_and_attach_to_fleet = re.compile("W\d+B\d+F\d+")
+build_n_industry_at_world = re.compile("W\d+I\d+I")
+build_n_population_limit_at_world = re.compile("W\d+I\d+L")
+build_n_robots_at_world = re.compile("W\d+B\d+R")
+
+build_orders = [build_n_iships_at_world, build_n_pships_at_world, build_n_ships_and_attach_to_fleet,
+                build_n_industry_at_world, build_n_population_limit_at_world, build_n_robots_at_world]
+
 """
 PnnnMqqqWmmm = moves qqq people or robots from world nnn to world mmm. Uses qqq industry and metal.
 CnnnMqqqWmmm = moves qqq converts from world nnn to world mmm. Uses qqq industry and metal.
 """
+
+move_n_people_from_world_to_world = re.compile("P\d+M\d+W\d+")
+move_n_converts_from_world_to_world = re.compile("C\d+M\d+W\d+")
+
+move_orders = [move_n_people_from_world_to_world, move_n_converts_from_world_to_world]
 
 """
 FnnnWmmm = move fleet nnn to world mmm.
@@ -1440,11 +1453,23 @@ FnnnWmmmWooo = move fleet nnn through world mmm to world ooo.
 FnnnWmmmWoooWppp = move fleet nnn through worlds nnn and ooo to world ppp
 """
 
+move_fleet_to_world = re.compile("F\d+W\d+")
+move_fleet_through_worlds = re.compile("F\d+W\d+W\d+")
+move_fleet_through_worlds = re.compile("F\d+W\d+W\d+W\d+")
+
+fleet_move_orders = [move_fleet_to_world, move_fleet_through_worlds, move_fleet_through_worlds]
+
 """
 FnnnPmmm = uses 1 ship from fleet nnn to probe world mmm (happens before movement and fleet nnn can then move that turn)
 InnnPmmm = uses an ISHIP at world nnn to probe world mmm
 PnnnPmmm = uses a PSHIP at world nnn to probe world mmm
 """
+
+probe_world_with_fleet = re.compile("F\d+P\d+")
+probe_world_with_iship = re.compile("I\d+P\d+")
+probe_world_with_pship = re.compile("P\d+P\d+")
+
+probe_orders = [probe_world_with_fleet, probe_world_with_iship, probe_world_with_pship]
 
 """
 FnnnU = unloads all the metal from fleet nnn onto the world where fleet nnn starts that turn.
@@ -1456,11 +1481,27 @@ FnnnNqqq = unload qqq metal as consumer goods
 FnnnL = fleet nnn will pick up as much metal as it can carry.
 FnnnLqqq = fleet nnn will pick up qqq metal.
 """
+unload_all_metal_from_fleet = re.compile("F\d+U")
+unload_n_metal_from_fleet = re.compile("F\d+U\d+")
+jettison_all_cargo_from_fleet = re.compile("F\d+J")
+jettison_n_cargo_from_fleet = re.compile("F\d+J\d+")
+unload_all_metal_as_consumer_goods = re.compile("F\d+N")
+unload_n_metal_as_consumer_goods = re.compile("F\d+N\d+")
+fleet_loads_metal = re.compile("F\d+L")
+fleet_loads_n_metal = re.compile("F\d+L\d+")
+
+unload_orders = [unload_all_metal_from_fleet, unload_n_metal_from_fleet, jettison_all_cargo_from_fleet,
+                 jettison_n_cargo_from_fleet, unload_all_metal_as_consumer_goods, unload_n_metal_as_consumer_goods,
+                 fleet_loads_metal, fleet_loads_n_metal]
 
 """
 VnnnFmmm = attach artifact nnn to fleet mmm. (The fleet must either be owned by you, or by an artifact collector. The artifact must be on the world the fleet is currently located or, if Fmmm is owned by a collector, it can also be on a fleet at the world where Fmmm is located.)
 VnnnW = drop the artifact nnn from the fleet carrying it, wherever it may be at the moment. Note that only one order per turn can be given for each artifact.
 """
+artifact_attach_to_fleet = re.compile("V\d+F\d+")
+artifact_drop_from_fleet = re.compile("V\d+W")
+
+artifact_orders = [artifact_attach_to_fleet, artifact_drop_from_fleet]
 
 """
 FnnnAFmmm = fleet nnn fires at fleet mmm.
@@ -1472,15 +1513,30 @@ FnnnAH = fleet nnn fires at ISHPS and PSHPS, then tries to make the world go neu
 InnnAC = ISHPS at world nnn fire at converts.
 PnnnAC = PSHPS at world nnn fire at converts.
 """
+fire_at_fleet = re.compile("F\d+A[FIPHC]")
+iships_fire_at_fleet = re.compile("I\d+A[FIPHC]")
+pships_fire_at_fleet = re.compile("P\d+A[FIPHC]")
+fire_at_iships_then_industry = re.compile("F\d+AI")
+fire_at_pships_then_population = re.compile("F\d+AP")
+fire_at_iships_and_pships_then_try_to_make_world_neutral = re.compile("F\d+AH")
+iships_fire_at_converts = re.compile("I\d+AC")
+pships_fire_at_converts = re.compile("P\d+AC")
+
+fire_orders = [fire_at_fleet, iships_fire_at_fleet, pships_fire_at_fleet, fire_at_iships_then_industry,
+               fire_at_pships_then_population, fire_at_iships_and_pships_then_try_to_make_world_neutral,
+               iships_fire_at_converts, pships_fire_at_converts]
 
 """
 FnnnCFmmm = fleet nnn fires at fleet mmm only of the owner of fleet mmm fires at you this turn at this world
 """
+conditional_fleet_fire = re.compile("F\d+CF\d+")
 
 """
 Z = don't ambush anyone this turn anywhere (must be given every turn if you want it to stay in effect).
 Znnn = don't ambush anyone this turn at world nnn.
 """
+ambush_no_one = re.compile("Z$")
+
 
 """
 A=xxxxxx = you are declaring player xxxxxx your ally.
@@ -1491,6 +1547,16 @@ J=xxxxxx = you are an Apostle declaring a jihad against player xxxxxx.
 FnnnG=xxxxxx = you are giving fleet nnn to player xxxxxx.
 WnnnG=xxxxxx = you are giving world nnn to player xxxxxx.
 """
+declare_ally = re.compile("A=\w+")
+declare_not_ally = re.compile("N=\w+")
+declare_loader = re.compile("L=\w+")
+declare_not_loader = re.compile("X=\w+")
+declare_jihad = re.compile("J=\w+")
+give_fleet = re.compile("F\d+G=\w+")
+give_world = re.compile("W\d+G=\w+")
+diplomacy_orders = [declare_ally, declare_not_ally, declare_loader, declare_not_loader, declare_jihad, give_fleet,
+                    give_world]
+
 
 """
 WnnnX = you are plundering world nnn.
@@ -1498,8 +1564,18 @@ FnnnQ = you are putting fleet nnn "at peace".
 FnnnX = you are putting fleet nnn "not at peace".
 FnnnB = you are building a planet buster bomb with fleet nnn.
 FnnnD = fleet nnn is dropping a PBB on the world below.
-FnnnRqqq = you are a berserker converting qqq ships from fleet nnn into robots (1 ship = 2 robots) and they are landing on the world below. (Happens after the firing for that turn is finished.)
+FnnnRqqq = you are a berserker converting qqq ships from fleet nnn into robots (1 ship = 2 robots) and they are landing 
+on the world below. (Happens after the firing for that turn is finished.)
 """
+
+plunder_world = re.compile("W\d+X")
+fleet_at_peace = re.compile("F\d+Q")
+fleet_not_at_peace = re.compile("F\d+X")
+build_pbb = re.compile("F\d+B")
+drop_pbb = re.compile("F\d+D")
+convert_ships_to_robots = re.compile("F\d+R\d+")
+
+misc_orders = [plunder_world, fleet_at_peace, fleet_not_at_peace, build_pbb, drop_pbb, convert_ships_to_robots]
 
 build_iships_at_world = re.compile(r'I(\d+)B(\d+)')
 build_pships_at_world = re.compile(r'P(\d+)B(\d+)')
