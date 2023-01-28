@@ -1,3 +1,5 @@
+import logging
+
 from flask import Flask
 
 app = Flask(__name__)
@@ -1168,7 +1170,7 @@ Jihad enemy, and 2 points are awarded for each of his population you kill.
 """
 
 
-class Owner:
+class ClassType:
     def __init__(self, name, color):
         self.name = name
         self.color = color
@@ -1189,9 +1191,9 @@ class Owner:
         return 1
 
 
-class Merchant(Owner):
+class Merchant(ClassType):
     def __init__(self):
-        Owner.__init__(self, "Merchant", "blue")
+        ClassType.__init__(self, "Merchant", "blue")
 
     def pship_cost(self):
         return 8
@@ -1206,9 +1208,9 @@ class Merchant(Owner):
         return 2
 
 
-class Pirate(Owner):
+class Pirate(ClassType):
     def __init__(self):
-        Owner.__init__(self, "Pirate", "red")
+        ClassType.__init__(self, "Pirate", "red")
 
     def pship_cost(self):
         return 12
@@ -1226,37 +1228,50 @@ class Pirate(Owner):
         return 1
 
 
-class ArtifactCollector(Owner):
+class ArtifactCollector(ClassType):
     def __init__(self):
-        Owner.__init__(self, "Artifact Collector", "green")
+        ClassType.__init__(self, "Artifact Collector", "green")
 
 
-class Berserker(Owner):
+class Berserker(ClassType):
     def __init__(self):
-        Owner.__init__(self, "Berserker", "yellow")
+        ClassType.__init__(self, "Berserker", "yellow")
 
 
-class Apostle(Owner):
+class Apostle(ClassType):
     def __init__(self):
-        Owner.__init__(self, "Apostle", "purple")
+        ClassType.__init__(self, "Apostle", "purple")
 
 
-class EmpireBuilder(Owner):
+class EmpireBuilder(ClassType):
     def __init__(self):
-        Owner.__init__(self, "Empire Builder", "black")
+        ClassType.__init__(self, "Empire Builder", "black")
 
 
 class Player:
-    def __init__(self, name, owner: Owner):
+    def __init__(self, name, class_type: ClassType):
         self.name = name
-        self.owner = owner
+        self.class_type = class_type
         self.home_world = None
+        self.ambush = True
         self.artifacts = []
         self.martyrs = []
         self.jihad = False
         self.jihad_enemy = None
         self.jihad_turns = 0
         self.score = 0
+
+    def __str__(self):
+        return self.name
+
+    def __repr__(self):
+        return self.name
+
+    def __eq__(self, other):
+        return self.name == other.name
+
+
+neutral = Player("Neutral", EmpireBuilder())
 
 
 def parse_fleet_move(order, worlds, fleets):
@@ -1287,13 +1302,15 @@ def parse_fleet_move(order, worlds, fleets):
 class CharacterType:
     """
     Character types are the different types of players that can be in the game. Each character type has a different
+    starting fleet, and a different set of abilities.
     """
 
-    def __init__(self, name, location, owner, description, greatest_treasure):
+    def __init__(self, name, description, greatest_treasure):
         self.name = name
-        self.location = location
-        self.owner = owner
-        self.orders = []
+        self.description = description
+        # The greatest treasure is the artifact that the player
+        # will be most likely to collect in the game.
+        self.greatest_treasure = greatest_treasure
 
     def move_to(self, world_of_fleet, worlds: [], fleets: []):
         if world_of_fleet in worlds:
@@ -1305,27 +1322,66 @@ class CharacterType:
         for order in self.orders:
             order_processing_dict[order[0]](order, worlds, fleets)
 
+    def __str__(self):
+        return self.name
+
+    def __repr__(self):
+        return self.name
+
+    def __eq__(self, other):
+        return self.name == other.name
+
+
+next_pid = 100
+
+
+def get_next_pid():
+    global next_pid
+    next_pid += 1
+
+    return next_pid
+
 
 class Piece:
-    def __init__(self, name, location, owner):
-        self.name = name
-        self.location = location
+    """
+    A piece is a fleet, world, or artifact. It has a name, location, and owner.
+    The pid is a unique identifier for each piece and will be used to create a unique name for each piece.
+    """
+
+    def __init__(self, name, location, owner: Player):
+        self.pid = get_next_pid()
+        self.name = name  # fleet name = "F", world name = "W", or artifact name = "A"
+        self.location = location  # world or fleet made of a string that is created by piece.name + piece.pid
         self.owner = owner
+
+    def __str__(self):
+        return '[' + self.name + str(self.pid) + ' ' + self.location.name + ' ' + self.owner.name + ']'
+
+    def __repr__(self):
+        return '[' + self.name + str(self.pid) + ' ' + self.location.name + ' ' + self.owner.name + ']'
+
+    def __eq__(self, other):
+        return self.name == other.name and self.pid == other.pid and self.location == other.location \
+            and self.owner == other.owner
 
 
 class Fleet(Piece):
-    def __init__(self, name, location, owner, ships, cargo, ppb, artifacts, orders):
-        super().__init__(name, location, owner)
+    def __init__(self, location, owner, ships, cargo, pbb, artifacts, orders):
+        super().__init__("F", location, owner)
         self.ships = ships
         self.cargo = cargo
-        self.ppb = ppb
+        self.ppb = pbb
         self.artifacts = artifacts
         self.orders = orders
 
+    def move_to(self, world, through_world1=None, through_world2=None, through_world3=None):
+        if world in self.location.neighbors:
+            self.location = world
+
 
 class World(Piece):
-    def __init__(self, name, location, owner, neighbors, population, pships, industry, iships, metal, mines):
-        super().__init__(name, location, owner)
+    def __init__(self, location, owner, neighbors, population, pships, industry, iships, metal, mines):
+        super().__init__("W", location, owner)
         self.neighbors = neighbors
         self.population = population
         self.pships = pships
@@ -1333,6 +1389,8 @@ class World(Piece):
         self.iships = iships
         self.metal = metal
         self.mines = mines
+        self.artifacts = []
+        self.ambush = True
 
     def calculate_effective_population(self, fleets: []):
         """
@@ -1378,8 +1436,8 @@ class World(Piece):
 
 
 class Artifact(Piece):
-    def __init__(self, name, location, owner, primary_name, secondary_name):
-        super().__init__(name, location, owner)
+    def __init__(self, location, owner, primary_name, secondary_name):
+        super().__init__("A", location, owner)
         self.primary_name = primary_name
         self.secondary_name = secondary_name
 
@@ -1387,10 +1445,10 @@ class Artifact(Piece):
 def calculate_fleet_suppression(world, fleets):
     fleet_suppression = 0
     for fleet in fleets:
-        if fleet.location == world and not fleet.at_peace and not fleet.owner == world.owner:
-            fleet_suppression += fleet.ships * fleet.owner.ship_effectiveness()
-        elif fleet.location == world and fleet.owner == world.owner:
-            fleet_suppression -= fleet.ships * fleet.owner.ship_effectiveness()
+        if fleet.location == world and not fleet.at_peace and not fleet.class_type == world.class_type:
+            fleet_suppression += fleet.ships * fleet.class_type.ship_effectiveness()
+        elif fleet.location == world and fleet.class_type == world.class_type:
+            fleet_suppression -= fleet.ships * fleet.class_type.ship_effectiveness()
 
     return fleet_suppression
 
@@ -1418,6 +1476,89 @@ transfer_orders = [transfer_n_ships_from_fleet_to_fleet, transfer_n_ships_from_f
                    transfer_n_pships_from_world_to_fleet, transfer_n_pships_from_world_to_iships,
                    transfer_n_iships_from_world_to_pships]
 
+
+def transfer_ships_from_fleet_to_fleet(order: str, fleets: []) -> bool:
+    """
+    Transfers ships from one fleet to another fleet (not a world)
+    :param order:
+    :param fleets:
+    :return:
+    """
+    fleet1 = int(order[1:4])
+    n = int(order[5:8])
+    fleet2 = int(order[9:12])
+    if fleets[fleet1].ships < n:
+        logging.warning("Not enough ships in fleet {} to transfer {} ships to fleet {}".format(fleet1, n, fleet2))
+        return False
+
+    fleets[fleet1].ships -= n
+    fleets[fleet2].ships += n
+
+    return True
+
+
+def transfer_ships_from_fleet_to_iships(order: str, fleets: [], worlds: []) -> bool:
+    """
+    Transfers ships from a fleet to ISHIPS at a world
+    :param order:
+    :param fleets:
+    :param worlds:
+    :return:
+    """
+    fleet = int(order[1:4])
+    n = int(order[5:8])
+    if fleets[fleet].ships < n:
+        logging.warning("Not enough ships in fleet {} to transfer {} ships to iships".format(fleet, n))
+        return False
+    world = int(order[9:12])
+    fleets[fleet].ships -= n
+    worlds[world].iships += n
+
+    return True
+
+
+def transfer_ships_from_fleet_to_pships(order: str, fleets: [], worlds: []) -> bool:
+    """
+    Transfers ships from a fleet to PSHIPS at a world
+    :param order:
+    :param fleets:
+    :param worlds:
+    :return:
+    """
+    fleet = int(order[1:4])
+    n = int(order[5:8])
+    if fleets[fleet].ships < n:
+        logging.warning("Not enough ships in fleet {} to transfer {} ships to pships".format(fleet, n))
+        return False
+
+    world = int(order[9:12])
+    fleets[fleet].ships -= n
+    worlds[world].pships += n
+
+    return True
+
+
+def transfer_iships_from_world_to_fleet(order, fleets, worlds) -> bool:
+    """"
+    Transfers ISHIPS from a world to a fleet
+    :param order:
+    :param fleets:
+    :param worlds:
+    :return:
+    """
+    world = int(order[1:4])
+    n = int(order[5:8])
+    if worlds[world].iships < n:
+        logging.warning("Not enough iships at world {} to transfer {} ships to fleet".format(world, n))
+        return False
+
+    fleet = int(order[9:12])
+    fleets[fleet].ships += n
+    worlds[world].iships -= n
+
+    return True
+
+
 """
 WnnnBqqqI = build qqq ISHIPS at world nnn. (This order is actually not necessary as all industry not otherwise ordered will automatically build ISHPS.)
 WnnnBqqqP = build qqq PSHIPS at world nnn
@@ -1436,6 +1577,69 @@ build_n_robots_at_world = re.compile("W\d+B\d+R")
 
 build_orders = [build_n_iships_at_world, build_n_pships_at_world, build_n_ships_and_attach_to_fleet,
                 build_n_industry_at_world, build_n_population_limit_at_world, build_n_robots_at_world]
+
+
+def effective_industry(world, fleets) -> int:
+    """
+    Returns the effective industry of a world or fleet
+    :param world:
+    :param fleets:
+    :return:
+    """
+    if world.fleet is None:
+        return world.industry
+    else:
+        hostile_ships_in_orbit = 0
+        for fleet in fleets:
+            if fleet.owner != world.owner and fleet.world == world.fleet and fleet.at_peace is False:
+                hostile_ships_in_orbit += fleet.ships
+        return (world.industry + world.owner.effecitve_iships * world.iships) - hostile_ships_in_orbit
+
+
+def effective_population(world, fleets) -> int:
+    """
+    Returns the effective population of a world
+    :param world:
+    :param fleets:
+    :return:
+    """
+    if world.fleet is None:
+        return world.population
+    else:
+        hostile_ships_in_orbit = 0
+        for fleet in fleets:
+            if fleet.owner != world.owner and fleet.world == world.fleet and fleet.at_peace is False:
+                hostile_ships_in_orbit += fleet.ships
+        return (world.population + world.owner.effecitve_pships * world.pships) - hostile_ships_in_orbit
+
+
+def build_iships_at_world(order: str, worlds: [], fleets: []) -> bool:
+    """
+    Builds ISHIPS at a world
+    :param fleets:
+    :param order:
+    :param worlds:
+    :return:
+    """
+    world = int(order[1:4])
+    n = int(order[5:8])
+    if effective_industry(worlds[world], fleets) < n:
+        logging.warning("Not enough industry at world {} to build {} iships".format(world, n))
+        return False
+
+    if worlds[world].metal < n:
+        logging.warning("Not enough metal at world {} to build {} iships".format(world, n))
+        return False
+
+    if effective_population(worlds[world], fleets) < n:
+        logging.warning("Not enough population {} to build {} iships".format(world, n))
+        return False
+
+    worlds[world].iships += n
+    worlds[world].industry -= n
+
+    return True
+
 
 """
 PnnnMqqqWmmm = moves qqq people or robots from world nnn to world mmm. Uses qqq industry and metal.
@@ -1495,8 +1699,11 @@ unload_orders = [unload_all_metal_from_fleet, unload_n_metal_from_fleet, jettiso
                  fleet_loads_metal, fleet_loads_n_metal]
 
 """
-VnnnFmmm = attach artifact nnn to fleet mmm. (The fleet must either be owned by you, or by an artifact collector. The artifact must be on the world the fleet is currently located or, if Fmmm is owned by a collector, it can also be on a fleet at the world where Fmmm is located.)
-VnnnW = drop the artifact nnn from the fleet carrying it, wherever it may be at the moment. Note that only one order per turn can be given for each artifact.
+VnnnFmmm = attach artifact nnn to fleet mmm. (The fleet must either be owned by you, or by an artifact collector. 
+The artifact must be on the world the fleet is currently located or, if Fmmm is owned by a collector, it can also be 
+on a fleet at the world where Fmmm is located.)
+VnnnW = drop the artifact nnn from the fleet carrying it, wherever it may be at the moment. Note that only one order 
+per turn can be given for each artifact.
 """
 artifact_attach_to_fleet = re.compile("V\d+F\d+")
 artifact_drop_from_fleet = re.compile("V\d+W")
@@ -1505,7 +1712,7 @@ artifact_orders = [artifact_attach_to_fleet, artifact_drop_from_fleet]
 
 """
 FnnnAFmmm = fleet nnn fires at fleet mmm.
-InnnAFmmm = ishps at world nnn fire at fleet mmm.
+InnnAFmmm = ISHPS at world nnn fire at fleet mmm.
 PnnnAFmmm = PSHPS at world mmm fire at fleet mmm.
 FnnnAI = fleet nnn fires at ISHPS, and then industry.
 FnnnAP = fleet nnn fires at PSHPS, and then population.
@@ -1527,7 +1734,7 @@ fire_orders = [fire_at_fleet, iships_fire_at_fleet, pships_fire_at_fleet, fire_a
                iships_fire_at_converts, pships_fire_at_converts]
 
 """
-FnnnCFmmm = fleet nnn fires at fleet mmm only of the owner of fleet mmm fires at you this turn at this world
+FnnnCFmmm = fleet nnn fires at fleet mmm only if the owner of fleet mmm fires at you this turn at this world
 """
 conditional_fleet_fire = re.compile("F\d+CF\d+")
 
@@ -1536,7 +1743,6 @@ Z = don't ambush anyone this turn anywhere (must be given every turn if you want
 Znnn = don't ambush anyone this turn at world nnn.
 """
 ambush_no_one = re.compile("Z$")
-
 
 """
 A=xxxxxx = you are declaring player xxxxxx your ally.
@@ -1556,7 +1762,6 @@ give_fleet = re.compile("F\d+G=\w+")
 give_world = re.compile("W\d+G=\w+")
 diplomacy_orders = [declare_ally, declare_not_ally, declare_loader, declare_not_loader, declare_jihad, give_fleet,
                     give_world]
-
 
 """
 WnnnX = you are plundering world nnn.
