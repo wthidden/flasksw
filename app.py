@@ -1,4 +1,5 @@
 import logging
+import re
 
 from flask import Flask
 
@@ -1270,6 +1271,19 @@ class Player:
     def __eq__(self, other):
         return self.name == other.name
 
+    def pship_effectiveness(self) -> int:
+        return self.class_type.pship_effectiveness()
+
+    def calculate_fleet_suppression(self, world, fleets):
+        suppression = 0
+        for fleet in fleets:
+            if fleet.location == world and fleet.owner != self:
+                suppression += fleet.ship_effectiveness() * fleet.ships
+        return suppression
+
+    def iship_effectiveness(self):
+        return self.class_type.ship_effectiveness()
+
 
 neutral = Player("Neutral", EmpireBuilder())
 
@@ -1311,16 +1325,6 @@ class CharacterType:
         # The greatest treasure is the artifact that the player
         # will be most likely to collect in the game.
         self.greatest_treasure = greatest_treasure
-
-    def move_to(self, world_of_fleet, worlds: [], fleets: []):
-        if world_of_fleet in worlds:
-            self.orders.append("M" + world_of_fleet.name)
-        elif world_of_fleet in fleets:
-            self.orders.append("M" + world_of_fleet.location.name)
-
-    def process_orders(self, worlds: [], fleets: [], order_processing_dict=None):
-        for order in self.orders:
-            order_processing_dict[order[0]](order, worlds, fleets)
 
     def __str__(self):
         return self.name
@@ -1397,9 +1401,9 @@ class World(Piece):
         :param fleets:
         :return: effective population of world, including fleets with ships at this world and not "at peace"
         """
-        effective_population = self.population + self.pships * self.owner.pship_effectiveness()
-        fleet_suppression = calculate_fleet_suppression(self, fleets)
-        return max(effective_population - fleet_suppression, 0)
+        current_effective_population = self.population + self.pships * self.owner.pship_effectiveness()
+        fleet_suppression = self.owner.calculate_fleet_suppression(self, fleets)
+        return max(current_effective_population - fleet_suppression, 0)
 
     def calculate_effective_industry(self, fleets):
         """
@@ -1407,9 +1411,9 @@ class World(Piece):
         :param fleets:
         :return: effective industry of world, including fleets with ships at this world and not "at peace"
         """
-        effective_industry = self.industry + self.iships * self.owner.iship_effectiveness()
+        current_effective_industry = self.industry + self.iships * self.owner.iship_effectiveness()
         fleet_suppression = calculate_fleet_suppression(self, fleets)
-        return max(effective_industry - fleet_suppression, 0)
+        return max(current_effective_industry - fleet_suppression, 0)
 
     def is_neighbor(self, world):
         return world in self.neighbors
@@ -1445,15 +1449,14 @@ class Artifact(Piece):
 def calculate_fleet_suppression(world, fleets):
     fleet_suppression = 0
     for fleet in fleets:
-        if fleet.location == world and not fleet.at_peace and not fleet.class_type == world.class_type:
+        if fleet.location == world and not fleet.at_peace and fleet.owner != world.owner:
             fleet_suppression += fleet.ships * fleet.class_type.ship_effectiveness()
-        elif fleet.location == world and fleet.class_type == world.class_type:
+        elif fleet.location == world and fleet.owner == world.owner:
             fleet_suppression -= fleet.ships * fleet.class_type.ship_effectiveness()
 
     return fleet_suppression
 
 
-import re
 
 """
 FnnnTqqqFmmm = transfers qqq ships from fleet nnn to fleet mmm
@@ -1463,7 +1466,7 @@ PnnnTqqqFmmm = transfers qqq ships from PSHIPS at world nnn to fleet mmm
 PnnnTqqqI or InnnTqqqP = transfers qqq ships from PSHIPS to ISHIPS or vice versa
 """
 
-transfer_n_ships_from_fleet_to_fleet = re.compile("F\d+T\d+F\d+")
+transfer_n_ships_from_fleet_to_fleet = re.compile('F\d+T\d+F\d+')
 transfer_n_ships_from_fleet_to_iships = re.compile("F\d+T\d+I")
 transfer_n_ships_from_fleet_to_pships = re.compile("F\d+T\d+P")
 transfer_n_iships_from_world_to_fleet = re.compile("I\d+T\d+F\d+")
@@ -1646,10 +1649,69 @@ PnnnMqqqWmmm = moves qqq people or robots from world nnn to world mmm. Uses qqq 
 CnnnMqqqWmmm = moves qqq converts from world nnn to world mmm. Uses qqq industry and metal.
 """
 
-move_n_people_from_world_to_world = re.compile("P\d+M\d+W\d+")
-move_n_converts_from_world_to_world = re.compile("C\d+M\d+W\d+")
+migrate_n_people_from_world_to_world = re.compile("P\d+M\d+W\d+")
+migrate_n_converts_from_world_to_world = re.compile("C\d+M\d+W\d+")
 
-move_orders = [move_n_people_from_world_to_world, move_n_converts_from_world_to_world]
+migrate_orders = [migrate_n_people_from_world_to_world, migrate_n_converts_from_world_to_world]
+
+
+def migrate_n_people_from_world_to_world(order: str, worlds: [], fleets: []) -> bool:
+    """
+    Migrates people from one world to another
+    :param order:
+    :param worlds:
+    :param fleets:
+    :return:
+    """
+    world = int(order[1:4])
+    n = int(order[5:8])
+    if effective_population(worlds[world], fleets) < n:
+        logging.warning("Not enough population at world {} to migrate {} people".format(world, n))
+        return False
+
+    if effective_industry(worlds[world], fleets) < n:
+        logging.warning("Not enough industry at world {} to migrate {} people".format(world, n))
+        return False
+
+    if effective_population(worlds[world], fleets) < n:
+        logging.warning("Not enough population at world {} to migrate {} people".format(world, n))
+        return False
+
+    world2 = int(order[9:12])
+    worlds[world].population -= n
+    worlds[world2].population += n
+
+    return True
+
+
+def migrate_n_converts_from_world_to_world(order: str, worlds: [], fleets: []) -> bool:
+    """
+    Migrates converts from one world to another
+    :param order:
+    :param worlds:
+    :param fleets:
+    :return:
+    """
+    world = int(order[1:4])
+    n = int(order[5:8])
+    if effective_population(worlds[world], fleets) < n:
+        logging.warning("Not enough population at world {} to migrate {} converts".format(world, n))
+        return False
+
+    if effective_industry(worlds[world], fleets) < n:
+        logging.warning("Not enough industry at world {} to migrate {} converts".format(world, n))
+        return False
+
+    if effective_population(worlds[world], fleets) < n:
+        logging.warning("Not enough population at world {} to migrate {} converts".format(world, n))
+        return False
+
+    world2 = int(order[9:12])
+    worlds[world].population -= n
+    worlds[world2].population += n
+
+    return True
+
 
 """
 FnnnWmmm = move fleet nnn to world mmm.
