@@ -1206,6 +1206,7 @@ The game sequence can be broken down in to the following phases:
 
 oid = 0
 
+
 def next_oid():
     global oid
     oid += 1
@@ -1230,7 +1231,6 @@ class OrderType(Enum):
     MOVE_INDUSTRY = 15
 
 
-
 class Order:
     type: str
 
@@ -1250,10 +1250,12 @@ class Order:
     def __eq__(self, other):
         return self.oid == other.oid
 
-orders = { OrderType.LOAD: [], OrderType.UNLOAD: [], OrderType.BUILD: [], OrderType.MOVE: [], OrderType.FIRE: [],
-           OrderType.GIFT: [], OrderType.ALLIE: [], OrderType.HOSTILE: [], OrderType.NEUTRAL: [], OrderType.CAPTURE: [],
-           OrderType.SCRAP: [], OrderType.MOVE_ARTIFACT: [], OrderType.MOVE_MUSEUM: [], OrderType.MOVE_MINE: [],
-           OrderType.MOVE_INDUSTRY: [] }
+
+orders = {OrderType.LOAD: [], OrderType.UNLOAD: [], OrderType.BUILD: [], OrderType.MOVE: [], OrderType.FIRE: [],
+          OrderType.GIFT: [], OrderType.ALLIE: [], OrderType.HOSTILE: [], OrderType.NEUTRAL: [], OrderType.CAPTURE: [],
+          OrderType.SCRAP: [], OrderType.MOVE_ARTIFACT: [], OrderType.MOVE_MUSEUM: [], OrderType.MOVE_MINE: [],
+          OrderType.MOVE_INDUSTRY: []}
+
 
 class ClassType:
     def __init__(self, name, color):
@@ -1436,40 +1438,31 @@ class Piece:
     The pid is a unique identifier for each piece and will be used to create a unique name for each piece.
     """
 
-    def __init__(self, name, location, owner: Player):
+    def __init__(self, piece_type: str = 'X', location=None, owner=None):
+        self.piece_type = piece_type  # fleet name = "F", world name = "W", or artifact name = "A"
         self.pid = get_next_pid()
-        self.name = name  # fleet name = "F", world name = "W", or artifact name = "A"
-        self.location = location  # world or fleet made of a string that is created by piece.name + piece.pid
+        self.location = location  # world or fleet location
         self.owner = owner
 
     def __str__(self):
-        return '[' + self.name + str(self.pid) + ' ' + self.location.name + ' ' + self.owner.name + ']'
+        return self.piece_type + str(self.pid)
 
     def __repr__(self):
-        return '[' + self.name + str(self.pid) + ' ' + self.location.name + ' ' + self.owner.name + ']'
+        return '[' + self.piece_type + str(self.pid) + ']'
 
     def __eq__(self, other):
-        return self.name == other.name and self.pid == other.pid and self.location == other.location \
-            and self.owner == other.owner
-
-
-class Fleet(Piece):
-    def __init__(self, location, owner, ships, cargo, pbb, artifacts, orders):
-        super().__init__("F", location, owner)
-        self.ships = ships
-        self.cargo = cargo
-        self.ppb = pbb
-        self.artifacts = artifacts
-        self.orders = orders
-
-    def move_to(self, world, through_world1=None, through_world2=None, through_world3=None):
-        if world in self.location.neighbors:
-            self.location = world
+        return self.piece_type == other.piece_type and self.pid == other.pid and \
+            self.location == other.location and self.owner == other.owner
 
 
 class World(Piece):
-    def __init__(self, location, owner, neighbors, population, pships, industry, iships, metal, mines):
-        super().__init__("W", location, owner)
+    """
+    The location of the world is the world itself. NB: this is different from the location of a fleet, which is a world.
+    """
+
+    def __init__(self, owner, neighbors: [], population: int, pships: int, industry: int,
+                 iships: int, metal: int, mines: int):
+        super().__init__("W", owner=owner)
         self.neighbors = neighbors
         self.population = population
         self.pships = pships
@@ -1479,6 +1472,9 @@ class World(Piece):
         self.mines = mines
         self.artifacts = []
         self.ambush = True
+        # location of world is the world itself NB: can't do this in Piece constructor because
+        # World is not defined yet
+        self.location = self
 
     def calculate_effective_population(self, fleets: []):
         """
@@ -1502,9 +1498,11 @@ class World(Piece):
     def is_neighbor(self, world):
         return world in self.neighbors
 
-    def is_within_range(self, world, hops, max_hops=3):
+    def is_within_range(self, world, hops: int, max_hops: int = 3):
         """
-
+        This is a recursive function that goes through the neighbors of the world and checks if the world is within
+        hops of self. If hops is 0, then the world must be self. If hops is 1, then the world must be in the neighbor
+        of self.
         :param world:
         :param hops:
         :param max_hops:
@@ -1523,6 +1521,19 @@ class World(Piece):
             return False
 
 
+class Fleet(Piece):
+    def __init__(self, location: World, owner: Player, ships: int, cargo: int, pbb: bool, artifacts: []):
+        super().__init__("F", location, owner)
+        self.ships = ships
+        self.cargo = cargo
+        self.ppb = pbb
+        self.artifacts = artifacts
+
+    def move_to(self, world, through_world1=None, through_world2=None, through_world3=None):
+        if world in self.location.neighbors:
+            self.location = world
+
+
 class Artifact(Piece):
     def __init__(self, location, owner, primary_name, secondary_name):
         super().__init__("A", location, owner)
@@ -1539,7 +1550,6 @@ def calculate_fleet_suppression(world, fleets):
             fleet_suppression -= fleet.ships * fleet.class_type.ship_effectiveness()
 
     return fleet_suppression
-
 
 
 """
@@ -1808,6 +1818,7 @@ move_fleet_through_worlds = re.compile("F\d+W\d+W\d+")
 move_fleet_through_worlds = re.compile("F\d+W\d+W\d+W\d+")
 
 fleet_move_orders = [move_fleet_to_world, move_fleet_through_worlds, move_fleet_through_worlds]
+
 
 def move_fleet_to_world(order: str, worlds: [], fleets: []) -> bool:
     """
