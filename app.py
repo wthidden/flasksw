@@ -1,5 +1,6 @@
 import logging
 import re
+from enum import Enum
 
 from flask import Flask
 
@@ -1170,6 +1171,89 @@ An Apostle can declare Jihad. Under Jihad, no points are awarded for Martyrs, bu
 Jihad enemy, and 2 points are awarded for each of his population you kill.
 """
 
+"""
+The basis of the game is a turn-based strategy game where players control fleets of ships and attempt to conquer the
+galaxy. Each player starts with a single world, and must expand their empire by building ships and conquering other
+worlds. Each world has a number of keys, and each key has a number of ships on it. Each ship can have cargo.
+Each turn, players can move their ships, fire on other ships, and build new ships. Players can also build industry on
+their worlds, which allows them to build ships faster. Players can also build mines on their worlds, which allow them
+to mine metal, which can be used to build ships. Players and allie with other players to form alliances, and can
+declare war on other players. Players can also trade with other players, and can trade with neutral worlds. Players
+can also build museums on their worlds, which allow them to store artifacts.
+
+The implementation of the game relies on the some simple design patterns. The game is divided into a number of
+classes, each of which has a specific purpose. The first major design is that there is a worlds map that maps world IDs
+to world objects. The second major design is that there is a players map that maps player IDs to player objects. The
+third major design is that there is a fleets map that maps fleet IDs to fleet objects. The fourth major design is that
+there are player orders that are stored in single orders map. The orders map maps orders by order type. Each time of
+order is done in a specific order, and the order type is used to determine the order in which the orders are done.
+
+The game sequence can be broken down in to the following phases:
+ - Turn orders are read/input from the players/database
+    - Turn orders are processed in the following order:
+        - Load/unload orders
+            - These may include scrap orders
+            - These may include moving artifacts from fleets to worlds
+        - Build orders
+        - Move orders
+            - These may trigger ambushes
+        - Fire orders
+        - Gift orders
+        - Capture results
+            - Either capture worlds or fleets
+        - Allie/Hostile/Neutral orders
+"""
+
+oid = 0
+
+def next_oid():
+    global oid
+    oid += 1
+    return oid
+
+
+class OrderType(Enum):
+    LOAD = 1
+    UNLOAD = 2
+    BUILD = 3
+    MOVE = 4
+    FIRE = 5
+    GIFT = 6
+    ALLIE = 7
+    HOSTILE = 8
+    NEUTRAL = 9
+    CAPTURE = 10
+    SCRAP = 11
+    MOVE_ARTIFACT = 12
+    MOVE_MUSEUM = 13
+    MOVE_MINE = 14
+    MOVE_INDUSTRY = 15
+
+
+
+class Order:
+    type: str
+
+    def __init__(self, owner, name: str, command: str):
+        self.oid = next_oid()
+        self.owner = owner
+        self.name = name
+        self.command = command
+        self.type = "Unknown"
+
+    def __str__(self):
+        return self.name + " (" + str(self.oid) + ")" + " - " + self.command
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __eq__(self, other):
+        return self.oid == other.oid
+
+orders = { OrderType.LOAD: [], OrderType.UNLOAD: [], OrderType.BUILD: [], OrderType.MOVE: [], OrderType.FIRE: [],
+           OrderType.GIFT: [], OrderType.ALLIE: [], OrderType.HOSTILE: [], OrderType.NEUTRAL: [], OrderType.CAPTURE: [],
+           OrderType.SCRAP: [], OrderType.MOVE_ARTIFACT: [], OrderType.MOVE_MUSEUM: [], OrderType.MOVE_MINE: [],
+           OrderType.MOVE_INDUSTRY: [] }
 
 class ClassType:
     def __init__(self, name, color):
@@ -1724,6 +1808,37 @@ move_fleet_through_worlds = re.compile("F\d+W\d+W\d+")
 move_fleet_through_worlds = re.compile("F\d+W\d+W\d+W\d+")
 
 fleet_move_orders = [move_fleet_to_world, move_fleet_through_worlds, move_fleet_through_worlds]
+
+def move_fleet_to_world(order: str, worlds: [], fleets: []) -> bool:
+    """
+    Moves a fleet to a world
+    :param order:
+    :param worlds:
+    :param fleets:
+    :return:
+    """
+    fleet = int(order[1:4])
+    world = int(order[5:8])
+    if fleets[fleet].location == world:
+        logging.warning("Fleet {} is already at world {}".format(fleet, world))
+        return False
+
+    if fleets[fleet].location != worlds[world].fleet:
+        logging.warning("Fleet {} is not orbiting world {}".format(fleet, world))
+        return False
+
+    if fleets[fleet].location != worlds[world].fleet:
+        logging.warning("Fleet {} is not orbiting world {}".format(fleet, world))
+        return False
+
+    if world not in world:
+        logging.warning("World {} does not exist".format(world))
+        return False
+
+    fleets[fleet].world = world
+
+    return True
+
 
 """
 FnnnPmmm = uses 1 ship from fleet nnn to probe world mmm (happens before movement and fleet nnn can then move that turn)
