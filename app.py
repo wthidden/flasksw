@@ -1,6 +1,6 @@
 import logging
 import re
-from enum import Enum
+from enum import IntEnum, unique
 
 from flask import Flask
 
@@ -61,7 +61,7 @@ MOVE A FLEET ONE, TWO, OR THREE WORLDS
 PROBE AN ADJACENT WORLD
 TRANSFER CARGO
 HOOK AND UNHOOK ARTIFACTS FROM FLEETS
-TO FIRE SHOTS FROM FLEETS, ISHPS, OR PSHIPS
+TO FIRE SHOTS FROM FLEETS, ISHIPS, OR PSHIPS
 CONDITIONAL FIRE ORDERS
 AMBUSH CONTROL
 ALLIANCES, JIHADS, AND GIFTS
@@ -139,7 +139,7 @@ F70[TERRAN]=0
 F102[TERRAN]=0
 F119[TERRAN]=0
 F133[TERRAN]=0
-This all means that your homeworld is world number 75, that the three worlds directly adjacent to your homeworld are 
+This all means that your home-world is world number 75, that the three worlds directly adjacent to your home-world are 
 worlds #5, #12, and #86; that this world belongs to TERRAN (you); that you have 30 industry, 30 metal stockpiled, 
 your mines produce 2 metal per turn, your current population is 50 and your maximum population is 100; the 
 "Turns Owned Number" is one (more about this later); you have one I-SHIP and one P-SHIP guarding your planet; 
@@ -161,7 +161,7 @@ W75B10F70
 W75B8F102
 W75B1F119
 W75B1F133
-Now, you want to move your three large fleets to the three worlds adjacent to your homeworld. You would give the 
+Now, you want to move your three large fleets to the three worlds adjacent to your home-world. You would give the 
 following orders:
 F3W5
 F70W12
@@ -177,7 +177,7 @@ industry (since none was listed), has 5 metal available and produces 5 per turn,
 population of 20, and a turns owned number of 1. F17 is a new key that you can use because you just captured it, and 
 at the moment it has zero ships.
 Now you have two choices. You can have the keys explore two new worlds, or you can have one key carry the 5 metal back 
-to your homeworld, and the other one explore a new world. It is probably better to explore (and most likely capture) 
+to your home-world, and the other one explore a new world. It is probably better to explore (and most likely capture) 
 two new worlds, but we'll also show you how to carry metal back to your home world. You will also notice that this 
 turn at your home world you still have 30 industry, and now you have 55 population, but you only have 2 metal. 
 (You produced them from your mines this turn.) Since you can build with the SMALLEST of the three numbers, 
@@ -208,7 +208,7 @@ To put the 5 metal from World 5 onto Fleet 3 and move back home with them, you w
 order causes fleet 3 to pick up all the metal it can carry. Each ship can carry 1 metal 
 (or two if you were a merchant). You could also have ordered: F3L5 which orders fleet 3 to pick up 5 metal. 
 You cannot order a fleet to pick up more metal than it can carry, but you can order it to pick up less. The second 
-order sends Fleet 3 back to your homeworld.
+order sends Fleet 3 back to your home-world.
 
 You could not order Fleet 3 to unload its cargo yet, because all unloading comes BEFORE movement. Please notice that 
 the order in which you write your instructions makes NO difference. The computer will execute all load and unload 
@@ -257,15 +257,15 @@ possible. You get one point per turn for each 10 population you control (except 
 point per turn for each industry you control (it makes no difference if the industry is able to build - if you own it, 
 you get a point for it), and 1 point per turn for each MINE you control. In other words, a planet with 4 industry with 
 6 mines and a population of 10 will gain you 11 points per turn. SPECIAL POWER: Other players can build an industry by 
-using 5 other industry , or by scrapping 6 ISHPS. You can build a new industry using only 4 other industry, or 
-scrapping 4 ISHPS.
+using 5 other industry , or by scrapping 6 ISHIPS. You can build a new industry using only 4 other industry, or 
+scrapping 4 ISHIPS.
 
  Table of Contents
 
 B. THE MERCHANT. You are interested only in trade. You get 8 points for each metal which you unload on a planet owned 
 by another player. (The other player can keep and use the metal which you unloaded.) You only get these points if 
 there is INDUSTRY at the planet, and only up to twice the number of industry that is there. In other words, if you are 
-unloading at another player's homeworld, where he or she has 30 industry, you can unload 60 metal per turn and get 
+unloading at another player's home-world, where he or she has 30 industry, you can unload 60 metal per turn and get 
 points for them. But at an outpost world where that player only has 1 industry, you can only get points for unloading 
 2 metal per turn. This is to keep you from dumping excess raw materials on worthless worlds. If you UNLOAD and LOAD 
 metal at the same world on the same turn, you only get points for the NET amount that was UNLOADED. If you unload 10 
@@ -298,7 +298,7 @@ captures all enemy fleets without firing a shot. This capture is automatic, and 
 When you get your printout from the computer, all captured fleets will be listed as belonging to you (along with a 
 "captured from" notation). Note that although you do not capture fleets belonging to your allies (see "Allies"), 
 you must outnumber their ships by more than 3 to 1 also in order to capture any enemy fleets in the area. You do 
-not have to outnumber ISHPS or PSHPS, and you cannot capture those.
+not have to outnumber ISHIPS or PSHIPS, and you cannot capture those.
 
 The computer checks for Pirate capture AFTER it checks to see if someone captures a world or an empty key 
 (see "Control of a World). So if you captured an enemy fleet at a world, you are not the "only person there" and you 
@@ -345,7 +345,7 @@ population that died there that turn.
 
 SPECIAL POWER: A Berserker can convert some of his ships on keys to robots, and they immediately drop to the world 
 below (robot attack). If a Berserker drops robots on a world, killing all the population, and leaves at least 1 robot 
-on the world, he or she captures the world, including any PSHPS or ISHPS which are there. If two Berserkers make a 
+on the world, he or she captures the world, including any PSHIPS or ISHIPS which are there. If two Berserkers make a 
 robot attack at the same time, one or the other of them will capture the world and all the robots - the odds of a 
 player being the winner are proportional to the number of robots that player used in the attack.
 
@@ -406,21 +406,21 @@ You now know how to get started. Read through this section briefly, but don't wo
  Table of Contents
 
 6. SHIPS. Ships must either be attached to a key, or be on a world. There can only be a maximum of 255 ships on any one 
-key. If the ships are on a world, they must either defend industry (ISHPS) or defend population (PSHPS). ISHPS and 
-PSHPS collectively are known as "Home Fleets". Note that ISHP and PSHP refer only to the position of the ship. All 
+key. If the ships are on a world, they must either defend industry (ISHIPS) or defend population (PSHIPS). ISHIPS and 
+PSHIPS collectively are known as "Home Fleets". Note that ISHIP and PSHIP refer only to the position of the ship. All 
 ships are identical.
 
-ISHPS and PSHPS cannot fire at each other, or at industry or population. They CAN fire at converts on their world.
+ISHIPS and PSHIPS cannot fire at each other, or at industry or population. They CAN fire at converts on their world.
 
 The only possible cargo of a ship is metal. Each ship can carry one metal (except merchants, who can carry two). Ships 
-can be freely moved from fleet to fleet (at the same world) or to ISHPS or PSHPS and back at the beginning of the turn 
+can be freely moved from fleet to fleet (at the same world) or to ISHIPS or PSHIPS and back at the beginning of the turn 
 (before movement or firing or loading metal, but after unloading metal). This is called a "transfer" and is not 
 considered movement. If you transfer from fleet to fleet, only SHIPS will transfer (not metal or artifacts). If 
 you try to transfer loaded ships, the ships will transfer but the metal will disappear.
 
-Six ISHPS which are at a world (as ISHPS) at the beginning of a turn may be scrapped and turned into one industry (4 
-ISHPS for Empire Builders). (If the ships are on a fleet, it will take two turns to create industry: one to transfer 
-them to ISHPS and one more to scrap them.) This is the ONLY way to get industry at a world which does not already have 
+Six ISHIPS which are at a world (as ISHIPS) at the beginning of a turn may be scrapped and turned into one industry (4 
+ISHIPS for Empire Builders). (If the ships are on a fleet, it will take two turns to create industry: one to transfer 
+them to ISHIPS and one more to scrap them.) This is the ONLY way to get industry at a world which does not already have 
 industry.
 
  Table of Contents
@@ -437,11 +437,11 @@ That means your Fleet # 85 has 5 ships, is carrying 2 metal, and moved this turn
 F85[ ]=0
 
 That means F85 is an UNOWNED or NEUTRAL key. You do NOT own it, so do not transfer ships to it. Please note that if you 
-leave an empty key (one with no ships on it) at a world where there are no other ships (no other fleets, and no ISHPS 
-or PSHPS), then the key will be listed as UNOWNED and if you BUILD a ship onto it on the next turn, you will NOT 
+leave an empty key (one with no ships on it) at a world where there are no other ships (no other fleets, and no ISHIPS 
+or PSHIPS), then the key will be listed as UNOWNED and if you BUILD a ship onto it on the next turn, you will NOT 
 capture it. (See "Loose Keys"). A common error for beginners is to put all their ships onto some of their keys, 
 moving all the ships away, and leaving one or more keys behind with NO ships. Then NEXT turn while these keys are 
-NEUTRAL, the beginner builds ships onto the neutral keys and creates a NEUTRAL fleet at his homeworld, which cannot 
+NEUTRAL, the beginner builds ships onto the neutral keys and creates a NEUTRAL fleet at his home-world, which cannot 
 be used. NEVER leave keys around with no ships on them unless you are trying to let another player capture them!
 
  Table of Contents
@@ -458,10 +458,11 @@ Apostles can also capture a world by converting all of its population to their r
 worlds by making a robot attack and destroying all the population (leaving at least one robot).
 
 If you own a world, it remains yours until some other player meets the capture requirements, or until some other player 
-forces it neutral by destroying all the ISHPS and PSHPS and firing at least two more shots than are necessary to destroy 
+forces it neutral by destroying all the ISHIPS and PSHIPS and firing at least two more shots than are necessary to 
+destroy 
 all the home fleets. You do not have to have any ships at a world to retain control, but if another player shows up and
- you do not have any ships there, you lose the world. If you show up at an unowned world which already has some ISHPS 
- or PSHPS, you will not capture that world until you destroy the home fleets.
+ you do not have any ships there, you lose the world. If you show up at an unowned world which already has some ISHIPS 
+ or PSHIPS, you will not capture that world until you destroy the home fleets.
 
  Table of Contents
 
@@ -471,8 +472,8 @@ can build is equal to the SMALLEST of these three numbers (and the metal are use
 If there is an enemy fleet "not at peace" at your world, for each shot he has which outnumbers your defending ships, 
 one industry will not build (your population is hiding inside bomb shelters). This is automatic, and is shown on your 
 printout. If you have 30 industry, but only 25 are allowed to build because of enemy presence (or any other reason), 
-your industry will be listed on your printout as 30/25. For this purpose only, ISHPS are counted as double. That is, if 
-you have 4 ISHPS at the world, and the enemy has 10 ships, only 2 of your industry will be unable to build because of 
+your industry will be listed on your printout as 30/25. For this purpose only, ISHIPS are counted as double. That is, if 
+you have 4 ISHIPS at the world, and the enemy has 10 ships, only 2 of your industry will be unable to build because of 
 enemy presence. Also any ships present belonging to a player who has declared you "ally" will be counted as defending 
 your industry.
 
@@ -508,7 +509,7 @@ the report on the new world.) If a berserker migrates robots to a world populate
 killing those people.
 
 You can only migrate to ONE world from any given world on a single turn, and you cannot give away the world or fire 
-with its PSHPS or ISHPS on the turn that you migrate. (You can migrate TO a world from all of its adjacent worlds, but 
+with its PSHIPS or ISHIPS on the turn that you migrate. (You can migrate TO a world from all of its adjacent worlds, but 
 you can only migrate FROM a world in one direction at a time.)
 
  Table of Contents
@@ -669,15 +670,18 @@ If you do not own the world that an artifact is on, you cannot hook that artifac
 
  Table of Contents
 
-15. FIRING. Each ship gets one shot per turn (1 shot = 1 hit) except ISHPS, PSHPS, and overloaded merchant ships. ISHPS 
-and PSHPS get 1/2 shot each (odd ship rounded up). Merchants can carry double cargo on their fleets, but each ship 
+15. FIRING. Each ship gets one shot per turn (1 shot = 1 hit) except ISHIPS, PSHIPS, and overloaded merchant ships. 
+ISHIPS 
+and PSHIPS get 1/2 shot each (odd ship rounded up). Merchants can carry double cargo on their fleets, but each ship 
 carrying a double cargo cannot fire. (If you have 5 ships carrying 6 metal, only 4 of the ships can fire.) Each 
-fleet must fire all of its shots at one target. If the ISHPS fire, they must all fire at the same target; ditto for 
-PSHPS. (That is, if you have 1 fleet, plus ISHPS and PSHPS at the same world, they can fire at 3 different targets, 
+fleet must fire all of its shots at one target. If the ISHIPS fire, they must all fire at the same target; ditto for 
+PSHIPS. (That is, if you have 1 fleet, plus ISHIPS and PSHIPS at the same world, they can fire at 3 different targets, 
 but not 4 different targets.)
 
-Fleets may fire at another fleet at the world, or may fire at industry, population, or home fleets (ISHPS and PSHPS are 
-known collectively as home fleets; this has nothing in particular to do with your home world). ISHPS and PSHPS can fire 
+Fleets may fire at another fleet at the world, or may fire at industry, population, or home fleets (ISHIPS and PSHIPS 
+are 
+known collectively as home fleets; this has nothing in particular to do with your home world). ISHIPS and PSHIPS can 
+fire 
 at fleets or at converts (and nothing else). Fleets can fire at population; if there are converts in the population, 
 some of the casualties will be converts, but the fleet cannot specify that it is shooting only at converts. In order 
 to fire at robots, you just fire at "population".
@@ -690,11 +694,12 @@ trying to move away, the key stays where you are. If a fleet moves, it cannot fi
 world and fire at it on the same turn. If you write an order to move and an order to fire for the same fleet, whichever 
 one we happen to type first will be executed, and the other one will be ignored.)
 
-If you fire at industry, first you must destroy all ISHPS at 2 hits apiece. The remaining shots destroy industry at 2 
-hits for 1 industry. If you fire at population, you must first destroy the PSHPS at 2 hits apiece; the remaining shots 
+If you fire at industry, first you must destroy all ISHIPS at 2 hits apiece. The remaining shots destroy industry at 2 
+hits for 1 industry. If you fire at population, you must first destroy the PSHIPS at 2 hits apiece; the remaining shots 
 will destroy population at 2 hits per 1 population.
 
-If you fire at home fleets, you first destroy the ISHPS, then the PSHPS. Any remaining shots fired at home fleets do not
+If you fire at home fleets, you first destroy the ISHIPS, then the PSHIPS. Any remaining shots fired at home fleets do 
+not
  destroy anything, but if there are at least 2 extra shots fired at a home fleet, the world becomes neutral until there
   is only one player there with ships not at peace. (Even if the owner of the world has fleets there. And if a world
    has no home fleets, you must fire at least 2 shots at it to force it neutral.) This is how you take a world away 
@@ -702,7 +707,7 @@ If you fire at home fleets, you first destroy the ISHPS, then the PSHPS. Any rem
 
 It is NOT necessary to force a world neutral if you are able to capture it. If you just want to destroy all the enemy 
 ships guarding a world, but not the population or industry, you fire at home fleets. If you fire at converts
- (ISHPS and PSHPS only), each shot destroys one convert.
+ (ISHIPS and PSHIPS only), each shot destroys one convert.
 
 Each attack must be either conditional or unconditional. An unconditional attack fires, no matter what. A conditional 
 attack means you fire at the specified target IF AND ONLY IF the owner of the target fires at YOU this turn AT THAT 
@@ -730,8 +735,8 @@ fringes of your empire. An enemy must either stop and fire at your outer ships, 
 him. Note that any enemy ships which have not moved or fired will ambush you even if they are at one of your worlds. 
 Fleets do not have to be at their own worlds to ambush.
 
-When you are ambushing, ISHPS and PSHPS are not halved as they are when firing, AND all ships are doubled when 
-ambushing. Thus, a fleet of 2 ships or 2 ISHPS will destroy two enemy ships (or four, if they are loaded with metal). 
+When you are ambushing, ISHIPS and PSHIPS are not halved as they are when firing, AND all ships are doubled when 
+ambushing. Thus, a fleet of 2 ships or 2 ISHIPS will destroy two enemy ships (or four, if they are loaded with metal). 
 Home fleets won't ambush if their world does a migration or is being given away.
 
 If you only destroyed some of the ships, the remainder of the fleet will continue on to where it was headed. If you 
@@ -761,7 +766,7 @@ does is make sure you won't do any automatic nasties against the player who you 
 
 18. GIFTS. At any time after you have met another player in the game, you may give a fleet or world to that player - 
 but neither of you can move the fleet or fire its shots the turn it is given away. If you have given away a world, 
-you can neither fire with its ISHPS or PSHPS nor plunder it the turn you give it away. You may build with industry 
+you can neither fire with its ISHIPS or PSHIPS nor plunder it the turn you give it away. You may build with industry 
 on the turn a world is given away, and you can load or unload metal or artifacts. You may only make TWO gift orders 
 per turn, and only to players who you have met at some point in the game. (i.e. one of their worlds or fleets or 
 converts or robots has appeared on your printout at least once so far in the game.) The player who receives a gift 
@@ -799,7 +804,7 @@ just built (you cannot drop it the turn it is built).
 
 Dropping a PBB is a FIRE order, and you cannot move on the turn you drop it. (See "Mutually Exclusive Orders") If 
 you drop the bomb, and the fleet carrying it is not destroyed by some other player on the turn it attempts the drop, 
-everything on that world (except artifacts) is destroyed. All population, industry, mines, metal, PSHPS, ISHPS, and 
+everything on that world (except artifacts) is destroyed. All population, industry, mines, metal, PSHIPS, ISHIPS, and 
 robots are destroyed. The population limit is reduced to zero. Fleets are not affected. Attempting to drop a PBB DOES 
 trigger "conditional fire".
 
@@ -926,7 +931,7 @@ World Number
 List of Connections
 Owner of this world, [ ] if no owner
 * Owner of converts: C[NAME]
-The number of industry, metal, mines, population, population limit, Iships, and Pships at the world. (If industry is two
+The number of industry, metal, mines, population, population limit, Iships, and PSHIPS at the world. (If industry is two
  numbers with a "/", then the first number is actual industry, and the second number is the amount of industry usable 
  this turn. If population is 25/5C for instance, that means that there are 25 population, of which 5 are converts. 
  If population is followed by an "R", that means they are robots.)
@@ -948,14 +953,14 @@ destinations, that means it left here, came back again, and left in a different 
 This is a cheap way to get a probe of an extra world, as long as you don't get ambushed along the way!
 In the example below, World 2 is adjacent to Worlds 24, 37, and 161. TERRAN owns the world and it has 1 industry, 2 
 mines, 2 metal, 7 population, 10 maximum population, in two or more turns the number of mines will increase, there 
-is one ISHP guarding the world, and that player JOVIAN moved his fleet #6 consisting of 1 ship into this world this 
+is one ISHIP guarding the world, and that player JOVIAN moved his fleet #6 consisting of 1 ship into this world this 
 turn. Also, Fleet #47 went from here to W161 this turn.
 W2 (24,37,161) [TERRAN] (Industry=1, Mines=2, Metal=2, Population=7, Limit=10, Turns=2, IShip=1)
 F6[JOVIAN]=1,Moved
 F47[TERRAN]->W161
 Each turn you will get a report from every world which you own, where you have fleets or converts or robots, or 
 where you have probed. You also get a report on a world the turn it is captured from you, or the turn you leave 
-it. And you always get a report on the world you started with (your homeworld). You are also told which players 
+it. And you always get a report on the world you started with (your home-world). You are also told which players 
 you have as allies, which players are currently your loaders, which players you have met so far in the game, and 
 which players you currently see on your printout. The current scores of the players you see THIS TURN will be 
 listed on your printout, but not necessarily in the order that the players appear. (The scores will be listed in 
@@ -1005,7 +1010,7 @@ If you want fleet 5 to move to world 2, the order is F5W2, not F005W002 or F--5W
 TRANSFER SHIPS FROM PLACE TO PLACE
 
 FnnnTqqqFmmm = transfers qqq ships from fleet nnn to fleet mmm
-FnnnTqqqI or FnnnTqqqP = transfers qqq ships from fleet nnn to ISHPS or PSHIPS
+FnnnTqqqI or FnnnTqqqP = transfers qqq ships from fleet nnn to ISHIPS or PSHIPS
 InnnTqqqFmmm = transfers qqq ships from ISHIPS at world nnn to fleet mmm
 PnnnTqqqFmmm = transfers qqq ships from PSHIPS at world nnn to fleet mmm
 PnnnTqqqI or InnnTqqqP = transfers qqq ships from PSHIPS to ISHIPS or vice versa
@@ -1013,10 +1018,10 @@ MAKE NEW INDUSTRY OUT OF SHIPS
 (This is the only way to get industry at a world which does not already have 5 industry, or 4 industry for an 
 empire builder.)
 
-WnnnSqqq = makes qqq new industry at world nnn by scrapping 6 ISHIPS each (or 4 ISHPS for an empire builder.)
+WnnnSqqq = makes qqq new industry at world nnn by scrapping 6 ISHIPS each (or 4 ISHIPS for an empire builder.)
 BUILDING
 WnnnBqqqI = build qqq ISHIPS at world nnn. (This order is actually not necessary as all industry not otherwise ordered 
-will automatically build ISHPS.)
+will automatically build ISHIPS.)
 WnnnBqqqP = build qqq PSHIPS at world nnn
 WnnnBqqqFmmm = build qqq ships and attach them to fleet mmm (fleet mmm must be at world nnn)
 WnnnIqqqI = build qqq new industry (needs 5 metal and 5 industry for each one)
@@ -1049,15 +1054,15 @@ The artifact must be on the world the fleet is currently located or, if Fmmm is 
 a fleet at the world where Fmmm is located.)
 VnnnW = drop the artifact nnn from the fleet carrying it, wherever it may be at the moment. Note that only one order 
 per turn can be given for each artifact.
-TO FIRE SHOTS FROM FLEETS, ISHPS, OR PSHIPS
+TO FIRE SHOTS FROM FLEETS, ISHIPS, OR PSHIPS
 FnnnAFmmm = fleet nnn fires at fleet mmm.
-InnnAFmmm = ishps at world nnn fire at fleet mmm.
-PnnnAFmmm = PSHPS at world mmm fire at fleet mmm.
-FnnnAI = fleet nnn fires at ISHPS, and then industry.
-FnnnAP = fleet nnn fires at PSHPS, and then population.
-FnnnAH = fleet nnn fires at ISHPS and PSHPS, then tries to make the world go neutral.
-InnnAC = ISHPS at world nnn fire at converts.
-PnnnAC = PSHPS at world nnn fire at converts.
+InnnAFmmm = ISHIPS at world nnn fire at fleet mmm.
+PnnnAFmmm = PSHIPS at world mmm fire at fleet mmm.
+FnnnAI = fleet nnn fires at ISHIPS, and then industry.
+FnnnAP = fleet nnn fires at PSHIPS, and then population.
+FnnnAH = fleet nnn fires at ISHIPS and PSHIPS, then tries to make the world go neutral.
+InnnAC = ISHIPS at world nnn fire at converts.
+PnnnAC = PSHIPS at world nnn fire at converts.
 CONDITIONAL FIRE ORDERS
 Exactly the same as fire orders, above, except replace the "A" in the above orders with a "C" for "conditional". 
 Example:
@@ -1097,8 +1102,8 @@ Making a robot attack
 Ambushing
 Being given away
 Dropping a PBB
-A conditional fire order IS a firing order, and is also mutually exclusive. Note that if you fire with the ISHPS or 
-PSHPS of a world, you cannot give that world away or migrate population from that world.
+A conditional fire order IS a firing order, and is also mutually exclusive. Note that if you fire with the ISHIPS or 
+PSHIPS of a world, you cannot give that world away or migrate population from that world.
  Table of Contents
 
 30. VICTORY POINT TOTALS. On the first turn of your game, you should pick a number between 1000 and 10,000 (inclusive). 
@@ -1135,7 +1140,7 @@ EMPIRE BUILDER
 1 point/turn for each 10 population controlled.
 1 point/turn for each MINE controlled.
 1 point/turn for each Industry controlled.
-Can build new industry with only 4 industry or scrapping 4 ISHPS.
+Can build new industry with only 4 industry or scrapping 4 ISHIPS.
 MERCHANT
 8 points/turn for each metal unloaded on world owned by another player. Points awarded only if Industry on world, and 
 only up to twice the number of industry at that world. Not awarded for neutral worlds.
@@ -1207,13 +1212,260 @@ The game sequence can be broken down in to the following phases:
 oid = 0
 
 
-def next_oid():
-    global oid
-    oid += 1
-    return oid
+class Ships:
+    """
+    A class that represents a number of ships on a fleet.
+    """
+
+    def __init__(self, ships: int, cargo: int):
+        self.ships = ships if ships <= 255 else 255
+        self.cargo = cargo if cargo <= 255 else 255
+
+    def effective_firepower(self):
+        return self.ships - self.cargo if self.ships > self.cargo else 0
+
+    def update(self, ships: int, cargo: int = None):
+        self.ships = ships if ships <= 255 else 255
+        self.cargo = cargo if cargo <= 255 else 255
+
+    def increase(self, ships: int):
+        self.ships += ships
+        self.ships = self.ships if self.ships <= 255 else 255
+
+    def decrease(self, ships: int):
+        self.ships -= ships
+        self.ships = self.ships if self.ships >= 0 else 0
+
+    def load(self, cargo: int):
+        self.cargo += cargo
+        self.cargo = self.cargo if self.cargo <= 255 else 255
+
+    def unload(self, cargo: int):
+        self.cargo -= cargo
+        self.cargo = self.cargo if self.cargo >= 0 else 0
+
+    def __str__(self):
+        return str(self.ships) + " ships, " + str(self.cargo) + " cargo"
+
+    def __repr__(self):
+        return str(self)
+
+    def __eq__(self, other):
+        return self.ships == other.ships and self.cargo == other.cargo
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __ge__(self, other):
+        return self.ships >= other.ships and self.cargo >= other.cargo
+
+    def __gt__(self, other):
+        return self.ships > other.ships and self.cargo > other.cargo
+
+    def __le__(self, other):
+        return self.ships <= other.ships and self.cargo <= other.cargo
+
+    def __lt__(self, other):
+        return self.ships < other.ships and self.cargo < other.cargo
 
 
-class OrderType(Enum):
+class WorldShips:
+    """
+    A class that represents a number of ships on a world. Either Iships or Pships.
+    """
+
+    def __init__(self, ships: int, location=None):
+        self.location = location
+        self.ships = ships if ships <= 255 else 255
+
+    def __str__(self):
+        return str(self.ships) + " ships"
+
+    def __repr__(self):
+        return str(self)
+
+    def __eq__(self, other):
+        return self.ships == other.ships
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __ge__(self, other):
+        return self.ships >= other.ships
+
+    def __gt__(self, other):
+        return self.ships > other.ships
+
+    def __le__(self, other):
+        return self.ships <= other.ships
+
+    def __lt__(self, other):
+        return self.ships < other.ships
+
+
+class IShips(WorldShips):
+    """
+    A class that represents a number of ships on a world. Iships.
+    """
+
+    def __init__(self, ships: int):
+        super().__init__(ships)
+
+    def increase(self, ships: int):
+        self.ships += ships
+        self.ships = self.ships if self.ships <= 255 else 255
+
+    def decrease(self, ships: int):
+        self.ships -= ships
+        self.ships = self.ships if self.ships >= 0 else 0
+
+
+class PShips(WorldShips):
+    """
+    A class that represents a number of ships on a world. Pships.
+    """
+
+    def __init__(self, ships: int):
+        super().__init__(ships)
+
+    def increase(self, ships: int):
+        self.ships += ships
+        self.ships = self.ships if self.ships <= 255 else 255
+
+    def decrease(self, ships: int):
+        self.ships -= ships
+        self.ships = self.ships if self.ships >= 0 else 0
+
+
+class Industries:
+    """
+    A class that represents a number of industries on a world.
+    """
+
+    def __init__(self, industries: int, location=None):
+        self.industries = industries if industries <= 255 else 255
+        self.location = location
+
+    def __str__(self):
+        return str(self.industries) + " industries"
+
+    def __repr__(self):
+        return str(self)
+
+    def __eq__(self, other):
+        return self.industries == other.industries and self.location == other.location
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __ge__(self, other):
+        return self.industries >= other.industries
+
+    def __gt__(self, other):
+        return self.industries > other.industries
+
+    def __le__(self, other):
+        return self.industries <= other.industries
+
+    def __lt__(self, other):
+        return self.industries < other.industries
+
+    def increase(self, industries: int):
+        self.industries += industries
+        self.industries = self.industries if self.industries <= 255 else 255
+
+    def decrease(self, industries: int):
+        self.industries -= industries
+        self.industries = self.industries if self.industries >= 0 else 0
+
+
+class Mines:
+    """
+    A class that represents a number of mines on a world.
+    """
+
+    def __init__(self, mines: int, location=None):
+        self.mines = mines if mines <= 255 else 255
+        self.location = location
+
+    def __str__(self):
+        return str(self.mines) + " mines"
+
+    def __repr__(self):
+        return str(self)
+
+    def __eq__(self, other):
+        return self.mines == other.mines and self.location == other.location
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __ge__(self, other):
+        return self.mines >= other.mines
+
+    def __gt__(self, other):
+        return self.mines > other.mines
+
+    def __le__(self, other):
+        return self.mines <= other.mines
+
+    def __lt__(self, other):
+        return self.mines < other.mines
+
+    def increase(self, mines: int):
+        self.mines += mines
+        self.mines = self.mines if self.mines <= 255 else 255
+
+    def decrease(self, mines: int):
+        self.mines -= mines
+        self.mines = self.mines if self.mines >= 0 else 0
+
+
+@unique
+class PopulationType(IntEnum):
+    """
+    A enum that tells what type of population a world has: normal, convert, robot, or none.
+    """
+    Normal = 0
+    Convert = 1
+    Robot = 2
+
+
+class Population:
+    """
+    A class that represents a number of population on a world.
+    """
+
+    def __init__(self, population: int, location=None, population_type: PopulationType = PopulationType.Normal):
+        self.population = [0, 0, 0]
+        self.population[population_type] = population if population <= 255 else 255
+        self.location = location
+        self.population_type: PopulationType = population_type
+
+    def __str__(self):
+        return str([str(self.population[PopulationType.Normal]), str(self.population[PopulationType.Convert]),
+                    str(self.population[PopulationType.Robot])]) + " population"
+
+    def converts(self):
+        return self.population[PopulationType.Convert]
+
+    def robots(self):
+        return self.population[PopulationType.Robot]
+
+    def normal(self):
+        return self.population[PopulationType.Normal]
+
+    def effective(self, fleets: []):
+        suppression_ships_in_orbit = 0
+        for fleet in fleets:
+            if not fleet.at_peace and fleet.location == self.location and fleet.owner != self.location.owner:
+                suppression_ships_in_orbit += fleet.ships.effective_firepower()
+        return self.population[PopulationType.Normal] - suppression_ships_in_orbit \
+            if self.population[PopulationType.Normal] - suppression_ships_in_orbit >= 0 else 0
+
+
+@unique
+class OrderType(IntEnum):
     LOAD = 1
     UNLOAD = 2
     BUILD = 3
@@ -1232,14 +1484,24 @@ class OrderType(Enum):
 
 
 class Order:
-    type: str
+    oid: int = 0
+    orders = {OrderType.LOAD: [], OrderType.UNLOAD: [], OrderType.BUILD: [], OrderType.MOVE: [], OrderType.FIRE: [],
+              OrderType.GIFT: [], OrderType.ALLIE: [], OrderType.HOSTILE: [], OrderType.NEUTRAL: [],
+              OrderType.CAPTURE: [], OrderType.SCRAP: [], OrderType.MOVE_ARTIFACT: [], OrderType.MOVE_MUSEUM: [],
+              OrderType.MOVE_MINE: [], OrderType.MOVE_INDUSTRY: []}
+
+    @classmethod
+    def _generate_next_oid(cls):
+        cls.oid += 1
+        return cls.oid
 
     def __init__(self, owner, name: str, command: str):
-        self.oid = next_oid()
+        self.oid = Order._generate_next_oid()
         self.owner = owner
         self.name = name
         self.command = command
         self.type = "Unknown"
+        Order.orders[self.type].append(self)
 
     def __str__(self):
         return self.name + " (" + str(self.oid) + ")" + " - " + self.command
@@ -1249,12 +1511,6 @@ class Order:
 
     def __eq__(self, other):
         return self.oid == other.oid
-
-
-orders = {OrderType.LOAD: [], OrderType.UNLOAD: [], OrderType.BUILD: [], OrderType.MOVE: [], OrderType.FIRE: [],
-          OrderType.GIFT: [], OrderType.ALLIE: [], OrderType.HOSTILE: [], OrderType.NEUTRAL: [], OrderType.CAPTURE: [],
-          OrderType.SCRAP: [], OrderType.MOVE_ARTIFACT: [], OrderType.MOVE_MUSEUM: [], OrderType.MOVE_MINE: [],
-          OrderType.MOVE_INDUSTRY: []}
 
 
 class ClassType:
@@ -1336,6 +1592,8 @@ class EmpireBuilder(ClassType):
 
 
 class Player:
+    players = []
+
     def __init__(self, name, class_type: ClassType):
         self.name = name
         self.class_type = class_type
@@ -1347,6 +1605,7 @@ class Player:
         self.jihad_enemy = None
         self.jihad_turns = 0
         self.score = 0
+        Player.players.append(self)
 
     def __str__(self):
         return self.name
@@ -1371,32 +1630,7 @@ class Player:
         return self.class_type.ship_effectiveness()
 
 
-neutral = Player("Neutral", EmpireBuilder())
-
-
-def parse_fleet_move(order, worlds, fleets):
-    tokenize = order.split()
-    if len(tokenize) != 4:
-        raise ValueError("Invalid fleet move order")
-    fleet_name = tokenize[0]
-    world_name = tokenize[1]
-    fleet = None
-    for f in fleets:
-        if f.name == fleet_name:
-            fleet = f
-            break
-    if fleet is None:
-        raise ValueError("Invalid fleet name")
-
-    world = None
-    for w in worlds:
-        if w.name == world_name:
-            world = w
-            break
-    if world is None:
-        raise ValueError("Invalid world name")
-
-    fleet.move_to(world)
+Neutral_Player = Player("Neutral", EmpireBuilder())
 
 
 class CharacterType:
@@ -1422,25 +1656,21 @@ class CharacterType:
         return self.name == other.name
 
 
-next_pid = 100
-
-
-def get_next_pid():
-    global next_pid
-    next_pid += 1
-
-    return next_pid
-
-
 class Piece:
     """
     A piece is a fleet, world, or artifact. It has a name, location, and owner.
     The pid is a unique identifier for each piece and will be used to create a unique name for each piece.
     """
+    next_pid: int = 100
+
+    @classmethod
+    def _generate_next_pid(cls):
+        cls.next_pid += 1
+        return cls.next_pid
 
     def __init__(self, piece_type: str = 'X', location=None, owner=None):
         self.piece_type = piece_type  # fleet name = "F", world name = "W", or artifact name = "A"
-        self.pid = get_next_pid()
+        self.pid = Piece._generate_next_pid()
         self.location = location  # world or fleet location
         self.owner = owner
 
@@ -1459,13 +1689,14 @@ class World(Piece):
     """
     The location of the world is the world itself. NB: this is different from the location of a fleet, which is a world.
     """
+    worlds = []
 
     def __init__(self, owner, neighbors: [], population: int, pships: int, industry: int,
                  iships: int, metal: int, mines: int):
         super().__init__("W", owner=owner)
         self.neighbors = neighbors
         self.population = population
-        self.pships = pships
+        self.PSHIPS = pships
         self.industry = industry
         self.iships = iships
         self.metal = metal
@@ -1475,17 +1706,19 @@ class World(Piece):
         # location of world is the world itself NB: can't do this in Piece constructor because
         # World is not defined yet
         self.location = self
+        World.worlds.append(self)
+        self.next_turn = {}
 
     def calculate_effective_population(self, fleets: []):
         """
         :param fleets:
         :return: effective population of world, including fleets with ships at this world and not "at peace"
         """
-        current_effective_population = self.population + self.pships * self.owner.pship_effectiveness()
+        current_effective_population = self.population + self.PSHIPS * self.owner.pship_effectiveness()
         fleet_suppression = self.owner.calculate_fleet_suppression(self, fleets)
         return max(current_effective_population - fleet_suppression, 0)
 
-    def calculate_effective_industry(self, fleets):
+    def calculate_effective_industry(self, fleets: []):
         """
 
         :param fleets:
@@ -1520,25 +1753,144 @@ class World(Piece):
                     return True
             return False
 
+    def update_industry(self, fleets, artifacts):
+        """
+        Update the industry of the world
+        :param fleets:
+        :param artifacts:
+        :return:
+        """
+        self.next_turn["industry"] = self.industry * 1.10
+
+        self.industry = self.calculate_effective_industry(fleets)
+        for artifact in artifacts:
+            if artifact.location == self:
+                self.industry += artifact.owner.artifact_effectiveness()
+
+    def update_metal(self, fleets, artifacts):
+        """
+        Update the metal of the world
+        :param fleets:
+        :param artifacts:
+        :return:
+        """
+        self.next_turn["metal"] = self.metal * 1.10
+
+        self.metal += self.calculate_metal_production(fleets)
+        for artifact in artifacts:
+            if artifact.location == self:
+                self.metal += artifact.owner.artifact_effectiveness()
+
+    def update_mines(self, fleets, artifacts):
+        """
+        Update the mines of the world
+        :param fleets:
+        :param artifacts:
+        :return:
+        """
+        self.next_turn["mines"] = self.mines * 1.10
+
+        self.mines = self.calculate_effective_mines(fleets)
+        for artifact in artifacts:
+            if artifact.location == self:
+                self.mines += artifact.owner.artifact_effectiveness()
+
+    def update_pships(self, fleets, artifacts):
+        """
+        Update the pships of the world
+        :param fleets:
+        :param artifacts:
+        :return:
+        """
+        self.next_turn["pships"] = self.pships * 1.10
+
+        self.pships = self.calculate_effective_pships(fleets)
+        for artifact in artifacts:
+            if artifact.location == self:
+                self.pships += artifact.owner.artifact_effectiveness()
+
+    def update_iships(self, fleets, artifacts):
+        """
+        Update the iships of the world
+        :param fleets:
+        :param artifacts:
+        :return:
+        """
+        self.next_turn["iships"] = self.calculate_effective_iships(fleets)
+
+        self.iships = self.calculate_effective_iships(fleets)
+        for artifact in artifacts:
+            if artifact.location == self:
+                self.iships += artifact.owner.artifact_effectiveness()
+
+    def update_ambush(self, fleets, artifacts):
+        """
+        Update the ambush of the world
+        :param fleets:
+        :param artifacts:
+        :return:
+        """
+        self.next_turn["ambush"] = self.ambush * 1.10
+
+        self.ambush = self.calculate_effective_ambush(fleets)
+        for artifact in artifacts:
+            if artifact.location == self:
+                self.ambush += artifact.owner.artifact_effectiveness()
+
+    def update_artifacts(self, fleets, artifacts):
+        """
+        Update the artifacts of the world
+        :param fleets:
+        :param artifacts:
+        :return:
+        """
+        self.next_turn["artifacts"] = self.artifacts * 1.10
+
+        self.artifacts = self.calculate_effective_artifacts(fleets)
+        for artifact in artifacts:
+            if artifact.location == self:
+                self.artifacts += artifact.owner.artifact_effectiveness()
+
+    def update_population(self, fleets, artifacts):
+        """
+        Update the population of the world
+        :param fleets:
+        :param artifacts:
+        :return:
+        """
+        self.next_turn["population"] = self.population * 1.10
+
+        self.population = self.calculate_effective_population(fleets)
+        for artifact in artifacts:
+            if artifact.location == self:
+                self.population += artifact.owner.artifact_effectiveness()
+
 
 class Fleet(Piece):
+    fleets = []
+
     def __init__(self, location: World, owner: Player, ships: int, cargo: int, pbb: bool, artifacts: []):
         super().__init__("F", location, owner)
         self.ships = ships
         self.cargo = cargo
         self.ppb = pbb
         self.artifacts = artifacts
+        self.at_peace = False
+        Fleet.fleets.append(self)
 
-    def move_to(self, world, through_world1=None, through_world2=None, through_world3=None):
+    def move_to(self, world):  # move fleet to world
         if world in self.location.neighbors:
             self.location = world
 
 
 class Artifact(Piece):
+    artifacts = []
+
     def __init__(self, location, owner, primary_name, secondary_name):
         super().__init__("A", location, owner)
         self.primary_name = primary_name
         self.secondary_name = secondary_name
+        Artifact.artifacts.append(self)
 
 
 def calculate_fleet_suppression(world, fleets):
@@ -1554,24 +1906,40 @@ def calculate_fleet_suppression(world, fleets):
 
 """
 FnnnTqqqFmmm = transfers qqq ships from fleet nnn to fleet mmm
-FnnnTqqqI or FnnnTqqqP = transfers qqq ships from fleet nnn to ISHPS or PSHIPS
+FnnnTqqqI or FnnnTqqqP = transfers qqq ships from fleet nnn to ISHIPS or PSHIPS
 InnnTqqqFmmm = transfers qqq ships from ISHIPS at world nnn to fleet mmm
 PnnnTqqqFmmm = transfers qqq ships from PSHIPS at world nnn to fleet mmm
 PnnnTqqqI or InnnTqqqP = transfers qqq ships from PSHIPS to ISHIPS or vice versa
 """
 
-transfer_n_ships_from_fleet_to_fleet = re.compile('F\d+T\d+F\d+')
+transfer_n_ships_from_fleet_to_fleet = re.compile("F\d+T\d+F\d+")
 transfer_n_ships_from_fleet_to_iships = re.compile("F\d+T\d+I")
-transfer_n_ships_from_fleet_to_pships = re.compile("F\d+T\d+P")
+transfer_n_ships_from_fleet_to_PSHIPS = re.compile("F\d+T\d+P")
 transfer_n_iships_from_world_to_fleet = re.compile("I\d+T\d+F\d+")
-transfer_n_pships_from_world_to_fleet = re.compile("P\d+T\d+F\d+")
-transfer_n_pships_from_world_to_iships = re.compile("P\d+T\d+I")
-transfer_n_iships_from_world_to_pships = re.compile("I\d+T\d+P")
+transfer_n_PSHIPS_from_world_to_fleet = re.compile("P\d+T\d+F\d+")
+transfer_n_PSHIPS_from_world_to_iships = re.compile("P\d+T\d+I")
+transfer_n_iships_from_world_to_PSHIPS = re.compile("I\d+T\d+P")
 
 transfer_orders = [transfer_n_ships_from_fleet_to_fleet, transfer_n_ships_from_fleet_to_iships,
-                   transfer_n_ships_from_fleet_to_pships, transfer_n_iships_from_world_to_fleet,
-                   transfer_n_pships_from_world_to_fleet, transfer_n_pships_from_world_to_iships,
-                   transfer_n_iships_from_world_to_pships]
+                   transfer_n_ships_from_fleet_to_PSHIPS, transfer_n_iships_from_world_to_fleet,
+                   transfer_n_PSHIPS_from_world_to_fleet, transfer_n_PSHIPS_from_world_to_iships,
+                   transfer_n_iships_from_world_to_PSHIPS]
+
+"""
+create an html/jinja2 template for inputting transfer orders
+<html>
+    <head>
+        <title>Transfer Orders</title>
+    </head>
+    <body>
+        <form action="/transfer_orders" method="post">
+            <input type="text" name="transfer_orders" />
+            <input type="submit" value="Submit" />
+        </form>
+    </body>
+</html>
+
+"""
 
 
 def transfer_ships_from_fleet_to_fleet(order: str, fleets: []) -> bool:
@@ -1625,12 +1993,12 @@ def transfer_ships_from_fleet_to_pships(order: str, fleets: [], worlds: []) -> b
     fleet = int(order[1:4])
     n = int(order[5:8])
     if fleets[fleet].ships < n:
-        logging.warning("Not enough ships in fleet {} to transfer {} ships to pships".format(fleet, n))
+        logging.warning("Not enough ships in fleet {} to transfer {} ships to PSHIPS".format(fleet, n))
         return False
 
     world = int(order[9:12])
     fleets[fleet].ships -= n
-    worlds[world].pships += n
+    worlds[world].PSHIPS += n
 
     return True
 
@@ -1657,22 +2025,24 @@ def transfer_iships_from_world_to_fleet(order, fleets, worlds) -> bool:
 
 
 """
-WnnnBqqqI = build qqq ISHIPS at world nnn. (This order is actually not necessary as all industry not otherwise ordered will automatically build ISHPS.)
+WnnnBqqqI = build qqq ISHIPS at world nnn. (This order is actually not necessary as all industry not otherwise ordered 
+will automatically build ISHIPS.)
 WnnnBqqqP = build qqq PSHIPS at world nnn
 WnnnBqqqFmmm = build qqq ships and attach them to fleet mmm (fleet mmm must be at world nnn)
 WnnnIqqqI = build qqq new industry (needs 5 metal and 5 industry for each one)
 WnnnIqqqL = increase the population limit of world nnn by qqq (uses 5 industry and 5 metal).
-WnnnBqqqR = build robots with qqq industry (makes twice that many robots). This order may only be given if the world is already populated with robots.
+WnnnBqqqR = build robots with qqq industry (makes twice that many robots). This order may only be given if the world is 
+already populated with robots.
 """
 
 build_n_iships_at_world = re.compile("W\d+B\d+I")
-build_n_pships_at_world = re.compile("W\d+B\d+P")
+build_n_PSHIPS_at_world = re.compile("W\d+B\d+P")
 build_n_ships_and_attach_to_fleet = re.compile("W\d+B\d+F\d+")
 build_n_industry_at_world = re.compile("W\d+I\d+I")
 build_n_population_limit_at_world = re.compile("W\d+I\d+L")
 build_n_robots_at_world = re.compile("W\d+B\d+R")
 
-build_orders = [build_n_iships_at_world, build_n_pships_at_world, build_n_ships_and_attach_to_fleet,
+build_orders = [build_n_iships_at_world, build_n_PSHIPS_at_world, build_n_ships_and_attach_to_fleet,
                 build_n_industry_at_world, build_n_population_limit_at_world, build_n_robots_at_world]
 
 
@@ -1707,7 +2077,7 @@ def effective_population(world, fleets) -> int:
         for fleet in fleets:
             if fleet.owner != world.owner and fleet.world == world.fleet and fleet.at_peace is False:
                 hostile_ships_in_orbit += fleet.ships
-        return (world.population + world.owner.effecitve_pships * world.pships) - hostile_ships_in_orbit
+        return (world.population + world.owner.effecitve_PSHIPS * world.PSHIPS) - hostile_ships_in_orbit
 
 
 def build_iships_at_world(order: str, worlds: [], fleets: []) -> bool:
@@ -1900,26 +2270,26 @@ artifact_orders = [artifact_attach_to_fleet, artifact_drop_from_fleet]
 
 """
 FnnnAFmmm = fleet nnn fires at fleet mmm.
-InnnAFmmm = ISHPS at world nnn fire at fleet mmm.
-PnnnAFmmm = PSHPS at world mmm fire at fleet mmm.
-FnnnAI = fleet nnn fires at ISHPS, and then industry.
-FnnnAP = fleet nnn fires at PSHPS, and then population.
-FnnnAH = fleet nnn fires at ISHPS and PSHPS, then tries to make the world go neutral.
-InnnAC = ISHPS at world nnn fire at converts.
-PnnnAC = PSHPS at world nnn fire at converts.
+InnnAFmmm = ISHIPS at world nnn fire at fleet mmm.
+PnnnAFmmm = PSHIPS at world mmm fire at fleet mmm.
+FnnnAI = fleet nnn fires at ISHIPS, and then industry.
+FnnnAP = fleet nnn fires at PSHIPS, and then population.
+FnnnAH = fleet nnn fires at ISHIPS and PSHIPS, then tries to make the world go neutral.
+InnnAC = ISHIPS at world nnn fire at converts.
+PnnnAC = PSHIPS at world nnn fire at converts.
 """
 fire_at_fleet = re.compile("F\d+A[FIPHC]")
 iships_fire_at_fleet = re.compile("I\d+A[FIPHC]")
-pships_fire_at_fleet = re.compile("P\d+A[FIPHC]")
+PSHIPS_fire_at_fleet = re.compile("P\d+A[FIPHC]")
 fire_at_iships_then_industry = re.compile("F\d+AI")
-fire_at_pships_then_population = re.compile("F\d+AP")
-fire_at_iships_and_pships_then_try_to_make_world_neutral = re.compile("F\d+AH")
+fire_at_PSHIPS_then_population = re.compile("F\d+AP")
+fire_at_iships_and_PSHIPS_then_try_to_make_world_neutral = re.compile("F\d+AH")
 iships_fire_at_converts = re.compile("I\d+AC")
-pships_fire_at_converts = re.compile("P\d+AC")
+PSHIPS_fire_at_converts = re.compile("P\d+AC")
 
-fire_orders = [fire_at_fleet, iships_fire_at_fleet, pships_fire_at_fleet, fire_at_iships_then_industry,
-               fire_at_pships_then_population, fire_at_iships_and_pships_then_try_to_make_world_neutral,
-               iships_fire_at_converts, pships_fire_at_converts]
+fire_orders = [fire_at_fleet, iships_fire_at_fleet, PSHIPS_fire_at_fleet, fire_at_iships_then_industry,
+               fire_at_PSHIPS_then_population, fire_at_iships_and_PSHIPS_then_try_to_make_world_neutral,
+               iships_fire_at_converts, PSHIPS_fire_at_converts]
 
 """
 FnnnCFmmm = fleet nnn fires at fleet mmm only if the owner of fleet mmm fires at you this turn at this world
@@ -1971,7 +2341,7 @@ convert_ships_to_robots = re.compile("F\d+R\d+")
 misc_orders = [plunder_world, fleet_at_peace, fleet_not_at_peace, build_pbb, drop_pbb, convert_ships_to_robots]
 
 build_iships_at_world = re.compile(r'I(\d+)B(\d+)')
-build_pships_at_world = re.compile(r'P(\d+)B(\d+)')
+build_PSHIPS_at_world = re.compile(r'P(\d+)B(\d+)')
 
 
 def process_orders(worlds, fleets, artifacts):
@@ -2016,3 +2386,181 @@ def process_turn(worlds, fleets, artifacts):
     """
     process_orders(worlds, fleets, artifacts)
     resolve_conflicts(worlds, fleets, artifacts)
+
+
+def update_population(worlds, fleets, artifacts):
+    """
+    Update the population of all worlds.
+    :param worlds:
+    :param fleets:
+    :param artifacts:
+    :return:
+    """
+    for world in worlds:
+        world.update_population(worlds, fleets, artifacts)
+
+
+def process_orders(worlds, fleets, artifacts):
+    """
+    Go through all orders for each game piece and process them.
+    :param worlds:
+    :param fleets:
+    :param artifacts:
+    :return:
+    """
+    for world in worlds:
+        world.process_orders(worlds, fleets)
+    for fleet in fleets:
+        fleet.process_orders(worlds, fleets)
+    for artifact in artifacts:
+        artifact.process_orders(worlds, fleets)
+
+
+"""
+Define some html/jinja2 templates for the game.
+Need to define a template for the game board, 
+a template for the game status,
+a template for the game history.
+Need to define a template for player order entry
+Need to define a template for player turn results
+"""
+
+"""
+<html>
+<head>
+<title>Game Board</title>
+</head>
+<body>
+<h1>Game Board</h1>
+<table>
+<tr>
+<td>World</td>
+<td>Owner</td>
+<td>Industry</td>
+<td>Population</td>
+<td>Ships</td>
+<td>Artifacts</td>
+</tr>
+{% for world in worlds %}
+<tr>
+<td>{{ world.name }}</td>
+<td>{{ world.owner }}</td>
+<td>{{ world.industry }}</td>
+<td>{{ world.population }}</td>
+<td>{{ world.ships }}</td>
+<td>{{ world.artifacts }}</td>
+</tr>
+{% endfor %}
+</table>
+</body>
+</html>
+"""
+
+"""
+<html>
+<head>
+<title>Game Status</title>
+</head>
+<body>
+<h1>Game Status</h1>
+<table>
+<tr>
+<td>Player</td>
+<td>Score</td>
+<td>Industry</td>
+<td>Population</td>
+<td>Ships</td>
+<td>Artifacts</td>
+</tr>
+{% for player in players %}
+<tr>
+<td>{{ player.name }}</td>
+<td>{{ player.score }}</td>
+<td>{{ player.industry }}</td>
+<td>{{ player.population }}</td>
+<td>{{ player.ships }}</td>
+<td>{{ player.artifacts }}</td>
+</tr>
+{% endfor %}
+</table>
+</body>
+</html>
+
+"""
+
+"""
+<html>
+<head>
+<title>Game History</title>
+</head>
+<body>
+<h1>Game History</h1>
+<table>
+<tr>
+<td>Turn</td>
+<td>Player</td>
+<td>Order</td>
+</tr>
+{% for turn in turns %}
+<tr>
+<td>{{ turn.turn }}</td>
+<td>{{ turn.player }}</td>
+<td>{{ turn.order }}</td>
+</tr>
+{% endfor %}
+</table>
+</body>
+</html>
+
+"""
+
+"""
+<html>
+<head>
+<title>Player Order Entry</title>
+</head>
+<body>
+<h1>Player Order Entry</h1>
+<form action="/player_order_entry" method="post">
+<table>
+<tr>
+<td>World</td>
+<td>Order</td>
+</tr>
+{% for world in worlds %}
+<tr>
+<td>{{ world.name }}</td>
+<td><input type="text" name="{{ world.name }}" /></td>
+</tr>
+{% endfor %}
+</table>
+<input type="submit" value="Submit" />
+</form>
+</body>
+</html>
+
+"""
+
+"""
+<html>
+<head>
+<title>Player Turn Results</title>
+</head>
+<body>
+<h1>Player Turn Results</h1>
+<table>
+<tr>
+<td>World</td>
+<td>Order</td>
+</tr>
+{% for world in worlds %}
+<tr>
+<td>{{ world.name }}</td>
+<td>{{ world.order }}</td>
+</tr>
+{% endfor %}
+</table>
+</body>
+</html>
+
+"""
