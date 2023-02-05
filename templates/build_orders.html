@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<!-- A POST request is used to send order data to the server. The data is sent in the body of the request. -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Turn Sheet</title>
+</head>
+<body>
+<!-- Get an SW Order from the user. Includes orders for worlds and fleets of the player. -->
+<form action="http://localhost:5000" method="post">
+    <label for="swOrder">SW Order:</label>
+    <input type="text" id="swOrder" name="swOrder">
+    <input type="submit" value="Submit">
+</form>
+</body>
+</html>

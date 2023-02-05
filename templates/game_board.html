@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- game board for game using classes from app.py!-->
+    <title>Game Board</title>
+</head>
+<body>
+<div id="GameBoard">
+    <table>
+        <tr>
+            <td class="cell" id="cell1">Owner</td>
+            <td class="cell" id="cell2">Neighbors</td>
+            <td class="cell" id="cell3">Id</td>
+        </tr>
+        {% for world in worlds %}
+        <tr>
+            <td class="cell" id="cell1">{{ world.owner }}</td>
+            <td class="cell" id="cell2">{{ world.neighbors }}</td>
+            <td class="cell" id="cell3">{{ world.id }}</td>
+    </table>
+</div>
+</body>
+</html>

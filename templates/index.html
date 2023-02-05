@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Satus</title>
+</head>
+<!-- use flask to render the game starweb game status -->
+<body>
+    <h1>Starweb Game Status</h1>
+    <table>
+        <tr>
+            <th>World</th>
+            <th>Owner</th>
+            <th>Neighbors</th>
+            <th>Population</th>
+            <th>Metals</th>
+            <th>IShips</th>
+            <th>PShips</th>
+        </tr>
+        {% for world in worlds %}
+        <tr>
+            <td>{{ world.pid }}</td>
+            <td>{{ world.owner }}</td>
+            <td>{{ world.neighbors }}</td>
+            <td>{{ world.population }}</td>
+            <td>{{ world.metals }}</td>
+            <td>{{ world.iships }}</td>
+            <td>{{ world.pships }}</td>
+            <td>{{ world.robots }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    <table>
+        <tr>
+            <th>Fleet</th>
+            <th>Location</th>
+            <th>Owner</th>
+            <th>Ships</th>
+        </tr>
+        {% for fleet in fleets %}
+        <tr>
+            <td>{{ fleet.pid }}</td>
+            <td>{{ fleet.location }}</td>
+            <td>{{ fleet.owner }}</td>
+            <td>{{ fleet.ships }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    <table>
+        <tr>
+            <th>Artifact</th>
+            <th>Owner</th>
+            <th>Orders</th>
+        </tr>
+        {% for artifact in artifacts %}
+        <tr>
+            <td>{{ artifact.name }}</td>
+            <td>{{ artifact.owner }}</td>
+            <td>{{ artifact.orders }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
