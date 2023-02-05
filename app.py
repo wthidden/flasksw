@@ -2,15 +2,14 @@ import logging
 import re
 from enum import IntEnum, unique
 
-from flask import Flask
+from flask import Flask, request, redirect, url_for, render_template
+
+# see README.md for more information
 
 app = Flask(__name__)
 
 
-oid = 0
-
-
-class Ships:
+class FleetShips:
     """
     A class that represents a number of ships on a fleet.
     """
@@ -103,7 +102,7 @@ class WorldShips:
 
 class IShips(WorldShips):
     """
-    A class that represents a number of ships on a world. Iships.
+    A class that represents a number of industry protection ships on a world.
     """
 
     def __init__(self, ships: int):
@@ -222,7 +221,7 @@ class Mines:
 @unique
 class PopulationType(IntEnum):
     """
-    A enum that tells what type of population a world has: normal, convert, robot, or none.
+    An enum that tells what type of population a world has: normal, convert, robot, or none.
     """
     Normal = 0
     Convert = 1
@@ -264,29 +263,44 @@ class Population:
 
 @unique
 class OrderType(IntEnum):
-    LOAD = 1
-    UNLOAD = 2
-    BUILD = 3
-    MOVE = 4
-    FIRE = 5
-    GIFT = 6
-    ALLIE = 7
-    HOSTILE = 8
-    NEUTRAL = 9
-    CAPTURE = 10
-    SCRAP = 11
-    MOVE_ARTIFACT = 12
-    MOVE_MUSEUM = 13
-    MOVE_MINE = 14
-    MOVE_INDUSTRY = 15
+    """
+    An enum that tells what type of order a fleet or world has.
+    """
+    Building = 0
+    Migrating = 1
+    Moving = 2
+    Probing = 3
+    Transfer = 4
+    Hooking = 5
+    Firing = 6
+    Conditional = 7
+    Ambushing = 8
+    Alliance_Jihads_Gifts = 9
+    Miscellaneous = 10
+
+
+class FleetExclusiveOrders(IntEnum):
+    """
+    An enum that tells what type of fleet exclusive order a fleet has.
+    """
+    Firing = 0
+    Moving = 1
+    Making_Robot_Attacks = 2
+    Ambushing = 3
+    Giving_Away = 4
+    Dropping_PBBs = 5
 
 
 class Order:
+    """
+    A class that represents an order.
+    """
     oid: int = 0
-    orders = {OrderType.LOAD: [], OrderType.UNLOAD: [], OrderType.BUILD: [], OrderType.MOVE: [], OrderType.FIRE: [],
-              OrderType.GIFT: [], OrderType.ALLIE: [], OrderType.HOSTILE: [], OrderType.NEUTRAL: [],
-              OrderType.CAPTURE: [], OrderType.SCRAP: [], OrderType.MOVE_ARTIFACT: [], OrderType.MOVE_MUSEUM: [],
-              OrderType.MOVE_MINE: [], OrderType.MOVE_INDUSTRY: []}
+    orders: {str: []} = {str(OrderType.Building): [], str(OrderType.Migrating): [], str(OrderType.Moving): [],
+                         str(OrderType.Probing): [], str(OrderType.Transfer): [], str(OrderType.Hooking): [],
+                         str(OrderType.Firing): [], str(OrderType.Conditional): [], str(OrderType.Ambushing): [],
+                         str(OrderType.Alliance_Jihads_Gifts): [], str(OrderType.Miscellaneous): [],
+                         "Unknown": []}
 
     @classmethod
     def _generate_next_oid(cls):
@@ -456,7 +470,7 @@ class CharacterType:
 
 class Piece:
     """
-    A piece is a fleet, world, or artifact. It has a name, location, and owner.
+    A piece is a fleet, or world. It has a name, location, owner, and order map.
     The pid is a unique identifier for each piece and will be used to create a unique name for each piece.
     """
     next_pid: int = 100
@@ -467,10 +481,11 @@ class Piece:
         return cls.next_pid
 
     def __init__(self, piece_type: str = 'X', location=None, owner=None):
-        self.piece_type = piece_type  # fleet name = "F", world name = "W", or artifact name = "A"
+        self.piece_type = piece_type  # fleet name = "F" or world name = "W"
         self.pid = Piece._generate_next_pid()
-        self.location = location  # world or fleet location
+        self.location = location  # location is a world
         self.owner = owner
+        self.orders = {}
 
     def __str__(self):
         return self.piece_type + str(self.pid)
@@ -481,6 +496,12 @@ class Piece:
     def __eq__(self, other):
         return self.piece_type == other.piece_type and self.pid == other.pid and \
             self.location == other.location and self.owner == other.owner
+
+    def process_orders(self, fleets):
+        """
+        Process the orders for this piece. This method is called at the end of each turn.
+        """
+        pass
 
 
 class World(Piece):
@@ -551,118 +572,6 @@ class World(Piece):
                     return True
             return False
 
-    def update_industry(self, fleets, artifacts):
-        """
-        Update the industry of the world
-        :param fleets:
-        :param artifacts:
-        :return:
-        """
-        self.next_turn["industry"] = self.industry * 1.10
-
-        self.industry = self.calculate_effective_industry(fleets)
-        for artifact in artifacts:
-            if artifact.location == self:
-                self.industry += artifact.owner.artifact_effectiveness()
-
-    def update_metal(self, fleets, artifacts):
-        """
-        Update the metal of the world
-        :param fleets:
-        :param artifacts:
-        :return:
-        """
-        self.next_turn["metal"] = self.metal * 1.10
-
-        self.metal += self.calculate_metal_production(fleets)
-        for artifact in artifacts:
-            if artifact.location == self:
-                self.metal += artifact.owner.artifact_effectiveness()
-
-    def update_mines(self, fleets, artifacts):
-        """
-        Update the mines of the world
-        :param fleets:
-        :param artifacts:
-        :return:
-        """
-        self.next_turn["mines"] = self.mines * 1.10
-
-        self.mines = self.calculate_effective_mines(fleets)
-        for artifact in artifacts:
-            if artifact.location == self:
-                self.mines += artifact.owner.artifact_effectiveness()
-
-    def update_pships(self, fleets, artifacts):
-        """
-        Update the pships of the world
-        :param fleets:
-        :param artifacts:
-        :return:
-        """
-        self.next_turn["pships"] = self.pships * 1.10
-
-        self.pships = self.calculate_effective_pships(fleets)
-        for artifact in artifacts:
-            if artifact.location == self:
-                self.pships += artifact.owner.artifact_effectiveness()
-
-    def update_iships(self, fleets, artifacts):
-        """
-        Update the iships of the world
-        :param fleets:
-        :param artifacts:
-        :return:
-        """
-        self.next_turn["iships"] = self.calculate_effective_iships(fleets)
-
-        self.iships = self.calculate_effective_iships(fleets)
-        for artifact in artifacts:
-            if artifact.location == self:
-                self.iships += artifact.owner.artifact_effectiveness()
-
-    def update_ambush(self, fleets, artifacts):
-        """
-        Update the ambush of the world
-        :param fleets:
-        :param artifacts:
-        :return:
-        """
-        self.next_turn["ambush"] = self.ambush * 1.10
-
-        self.ambush = self.calculate_effective_ambush(fleets)
-        for artifact in artifacts:
-            if artifact.location == self:
-                self.ambush += artifact.owner.artifact_effectiveness()
-
-    def update_artifacts(self, fleets, artifacts):
-        """
-        Update the artifacts of the world
-        :param fleets:
-        :param artifacts:
-        :return:
-        """
-        self.next_turn["artifacts"] = self.artifacts * 1.10
-
-        self.artifacts = self.calculate_effective_artifacts(fleets)
-        for artifact in artifacts:
-            if artifact.location == self:
-                self.artifacts += artifact.owner.artifact_effectiveness()
-
-    def update_population(self, fleets, artifacts):
-        """
-        Update the population of the world
-        :param fleets:
-        :param artifacts:
-        :return:
-        """
-        self.next_turn["population"] = self.population * 1.10
-
-        self.population = self.calculate_effective_population(fleets)
-        for artifact in artifacts:
-            if artifact.location == self:
-                self.population += artifact.owner.artifact_effectiveness()
-
 
 class Fleet(Piece):
     fleets = []
@@ -681,23 +590,51 @@ class Fleet(Piece):
             self.location = world
 
 
-class Artifact(Piece):
+class Artifact:
     artifacts = []
 
     def __init__(self, location, owner, primary_name, secondary_name):
-        super().__init__("A", location, owner)
+        self.location = location
+        self.owner = owner
         self.primary_name = primary_name
         self.secondary_name = secondary_name
+        self.special = None
         Artifact.artifacts.append(self)
 
 
+artifact_primary_names = ['Platinum', 'Ancient', 'Vegan', 'Blessed', 'Arcturian', 'Silver', 'Titanium', 'Gold',
+                          'Radiant', 'Plastic']
+artifact_secondary_names = ['Lodestar', 'Pyramid', 'Stardust', 'Shekel', 'Crown', 'Sword', 'Moonstone',
+                            'Sepulchre' 'Sphinx']
+
+
+def create_artifact(primary_name, secondary_name):
+    artifact = Artifact(None, None, primary_name, secondary_name)
+    return artifact
+
+
+def create_all_artifacts():
+    for first_name in artifact_primary_names:
+        for second_name in artifact_secondary_names:
+            create_artifact(first_name, second_name)
+
+
 def calculate_fleet_suppression(world, fleets):
+    """
+    Calculates the fleet suppression of a world based on the fleets in the world that are not at peace and are not owned
+    by the world's owner. The fleet suppression is the sum of the ships in the fleets times the effectiveness of the
+    fleet's class type. The fleet suppression is subtracted from the world's suppression if the fleet is owned by the
+    world's owner. The inclusion of the world's owner's fleets is a deviation from the original game.
+    :param world:
+    :param fleets:
+    :return:
+    """
     fleet_suppression = 0
     for fleet in fleets:
         if fleet.location == world and not fleet.at_peace and fleet.owner != world.owner:
-            fleet_suppression += fleet.ships * fleet.class_type.ship_effectiveness()
+            fleet_suppression += fleet.ships * fleet.owner.class_type.ship_effectiveness()
         elif fleet.location == world and fleet.owner == world.owner:
-            fleet_suppression -= fleet.ships * fleet.class_type.ship_effectiveness()
+            fleet_suppression -= fleet.ships * fleet.owner.class_type.ship_effectiveness()
 
     return fleet_suppression
 
@@ -843,6 +780,37 @@ build_n_robots_at_world = re.compile("W\d+B\d+R")
 build_orders = [build_n_iships_at_world, build_n_PSHIPS_at_world, build_n_ships_and_attach_to_fleet,
                 build_n_industry_at_world, build_n_population_limit_at_world, build_n_robots_at_world]
 
+
+@app.route('/index')
+def index():
+    return render_template('index.html')
+
+
+@app.route('/build_orders', methods=['POST'])
+def build_orders():
+    """
+    Handles the build orders
+    :return:
+    """
+    build_orders = request.form['build_orders']
+    build_orders = build_orders.splitlines()
+    for order in build_orders:
+        if build_n_iships_at_world.match(order):
+            build_n_iships_at_world(order)
+        elif build_n_PSHIPS_at_world.match(order):
+            build_n_PSHIPS_at_world(order)
+        elif build_n_ships_and_attach_to_fleet.match(order):
+            build_n_ships_and_attach_to_fleet(order)
+        elif build_n_industry_at_world.match(order):
+            build_n_industry_at_world(order)
+        elif build_n_population_limit_at_world.match(order):
+            build_n_population_limit_at_world(order)
+        elif build_n_robots_at_world.match(order):
+            build_n_robots_at_world(order)
+        else:
+            logging.warning("Invalid build order: {}".format(order))
+
+    return redirect(url_for('index'))
 
 def effective_industry(world, fleets) -> int:
     """
@@ -1207,11 +1175,11 @@ def process_orders(worlds, fleets, artifacts):
     :return:
     """
     for world in worlds:
-        world.process_orders(worlds, fleets)
+        world.process_orders(fleets)
     for fleet in fleets:
-        fleet.process_orders(worlds, fleets)
+        fleet.process_orders(fleets)
     for artifact in artifacts:
-        artifact.process_orders(worlds, fleets)
+        artifact.process_orders(fleets)
 
 
 """
@@ -1223,142 +1191,5 @@ Need to define a template for player order entry
 Need to define a template for player turn results
 """
 
-"""
-<html>
-<head>
-<title>Game Board</title>
-</head>
-<body>
-<h1>Game Board</h1>
-<table>
-<tr>
-<td>World</td>
-<td>Owner</td>
-<td>Industry</td>
-<td>Population</td>
-<td>Ships</td>
-<td>Artifacts</td>
-</tr>
-{% for world in worlds %}
-<tr>
-<td>{{ world.name }}</td>
-<td>{{ world.owner }}</td>
-<td>{{ world.industry }}</td>
-<td>{{ world.population }}</td>
-<td>{{ world.ships }}</td>
-<td>{{ world.artifacts }}</td>
-</tr>
-{% endfor %}
-</table>
-</body>
-</html>
-"""
-
-"""
-<html>
-<head>
-<title>Game Status</title>
-</head>
-<body>
-<h1>Game Status</h1>
-<table>
-<tr>
-<td>Player</td>
-<td>Score</td>
-<td>Industry</td>
-<td>Population</td>
-<td>Ships</td>
-<td>Artifacts</td>
-</tr>
-{% for player in players %}
-<tr>
-<td>{{ player.name }}</td>
-<td>{{ player.score }}</td>
-<td>{{ player.industry }}</td>
-<td>{{ player.population }}</td>
-<td>{{ player.ships }}</td>
-<td>{{ player.artifacts }}</td>
-</tr>
-{% endfor %}
-</table>
-</body>
-</html>
-
-"""
-
-"""
-<html>
-<head>
-<title>Game History</title>
-</head>
-<body>
-<h1>Game History</h1>
-<table>
-<tr>
-<td>Turn</td>
-<td>Player</td>
-<td>Order</td>
-</tr>
-{% for turn in turns %}
-<tr>
-<td>{{ turn.turn }}</td>
-<td>{{ turn.player }}</td>
-<td>{{ turn.order }}</td>
-</tr>
-{% endfor %}
-</table>
-</body>
-</html>
-
-"""
-
-"""
-<html>
-<head>
-<title>Player Order Entry</title>
-</head>
-<body>
-<h1>Player Order Entry</h1>
-<form action="/player_order_entry" method="post">
-<table>
-<tr>
-<td>World</td>
-<td>Order</td>
-</tr>
-{% for world in worlds %}
-<tr>
-<td>{{ world.name }}</td>
-<td><input type="text" name="{{ world.name }}" /></td>
-</tr>
-{% endfor %}
-</table>
-<input type="submit" value="Submit" />
-</form>
-</body>
-</html>
-
-"""
-
-"""
-<html>
-<head>
-<title>Player Turn Results</title>
-</head>
-<body>
-<h1>Player Turn Results</h1>
-<table>
-<tr>
-<td>World</td>
-<td>Order</td>
-</tr>
-{% for world in worlds %}
-<tr>
-<td>{{ world.name }}</td>
-<td>{{ world.order }}</td>
-</tr>
-{% endfor %}
-</table>
-</body>
-</html>
-
+game_board_template = """
 """

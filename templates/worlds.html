@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Worlds</title>
+</head>
+<body>
+<!-- render a list of worlds in a table -->
+<div class="world">
+    <table>
+        <tr>
+            <th class="cell" id="cell1">Id</th>
+            <th class="cell" id="cell2">Owner</th>
+            <th class="cell" id="cell3">Population</th>
+            <th class="cell" id="cell4">Population Limit</th>
+            <th class="cell" id="cell5">IShips</th>
+            <th class="cell" id="cell6">PShips</th>
+            <th class="cell" id="cell7">Industry</th>
+            <th class="cell" id="cell8">Mines</th>
+            <th class="cell" id="cell9">Metal</th>
+            <th class="cell" id="cell10">Museum</th>
+            {% for world in worlds %}
+                <tr>
+                    <td class="cell" id="cell1">{{ world.id }}</td>
+                    <td class="cell" id="cell2">{{ world.owner }}</td>
+                    <td class="cell" id="cell3">{{ world.population }}</td>
+                    <td class="cell" id="cell4">{{ world.population_limit }}</td>
+                    <td class="cell" id="cell5">{{ world.incoming_ships }}</td>
+                    <td class="cell" id="cell6">{{ world.planet_ships }}</td>
+                    <td class="cell" id="cell7">{{ world.industry }}</td>
+                    <td class="cell" id="cell8">{{ world.mines }}</td>
+                    <td class="cell" id="cell9">{{ world.metal }}</td>
+                    <td class="cell" id="cell10">{{ world.museum }}</td>
+                </tr>
+            {% endfor %}
+    </table>
+</div>
+</body>
+</html>
